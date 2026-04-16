@@ -504,4 +504,6 @@ export default function App() {
       {adding && <AddModal onClose={() => setAdding(false)} onAdd={handleAdd} loading={saving} />}
     </div>
   );
-}
+}git add .
+git commit -m "mobile responsive layout"
+git push
