@@ -101,7 +101,7 @@ function RadialChart({ data, size = 140 }) {
   );
 }
 
-function EventModal({ event, onClose, onDelete, isMobile }) {
+function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
   if (!event) return null;
   const pc = PART_COLOR[event.participation] || G.primary;
   const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
@@ -142,16 +142,25 @@ function EventModal({ event, onClose, onDelete, isMobile }) {
             <span key={a} style={{ background: G.pale, border: `1px solid ${G.mid}`, color: G.light, borderRadius: "20px", padding: "5px 12px", fontSize: "12px", fontWeight: "500" }}>{a}</span>
           ))}
         </div>
-        <button onClick={() => onDelete(event.id)} style={{ width: "100%", padding: "12px", background: "rgba(231,111,81,0.08)", border: "1px solid rgba(231,111,81,0.25)", borderRadius: "10px", color: "#E76F51", cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
-          DELETE EVENT
-        </button>
+
+        {/* Edit + Delete buttons */}
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button onClick={() => onEdit(event)}
+            style={{ flex: 2, padding: "12px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "10px", color: "white", cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "700", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 12px ${G.primary}40` }}>
+            ✎ EDIT EVENT
+          </button>
+          <button onClick={() => onDelete(event.id)}
+            style={{ flex: 1, padding: "12px", background: "rgba(231,111,81,0.08)", border: "1px solid rgba(231,111,81,0.25)", borderRadius: "10px", color: "#E76F51", cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
+            DELETE
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function AddModal({ onClose, onAdd, loading, isMobile }) {
-  const [f, setF] = useState({
+function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
+  const [f, setF] = useState(initial || {
     name: "", type: "Conference", date: "", location: "", region: "Middle East",
     objective: "", attendees: "", participation: "Exhibitor",
     status: "Upcoming", highlight: "", previous_participation: false,
@@ -164,7 +173,9 @@ function AddModal({ onClose, onAdd, loading, isMobile }) {
       <div onClick={e => e.stopPropagation()} style={{ background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", padding: "28px", maxWidth: isMobile ? "100%" : "560px", width: "100%", maxHeight: isMobile ? "92vh" : "90vh", overflowY: "auto", paddingBottom: isMobile ? "40px" : "28px" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: `linear-gradient(90deg,${G.dark},${G.primary},${G.light})`, borderRadius: "20px 20px 0 0" }} />
         {isMobile && <div style={{ width: "40px", height: "4px", background: BG.muted, borderRadius: "2px", margin: "0 auto 20px" }} />}
-        <h2 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: "700", color: BG.text, letterSpacing: "-0.02em" }}>Register New Event</h2>
+        <h2 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: "700", color: BG.text, letterSpacing: "-0.02em" }}>
+          {isEdit ? "Edit Event" : "Register New Event"}
+        </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div><label style={lbl}>Event Name</label><input style={inp} value={f.name} onChange={e => s("name", e.target.value)} placeholder="e.g. ADIPEC 2025" /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -180,7 +191,6 @@ function AddModal({ onClose, onAdd, loading, isMobile }) {
             <div><label style={lbl}>Status</label><select style={inp} value={f.status} onChange={e => s("status", e.target.value)}>{["Upcoming", "Completed", "Cancelled"].map(x => <option key={x}>{x}</option>)}</select></div>
           </div>
 
-          {/* Previous Participation Toggle */}
           <div>
             <label style={lbl}>Previous Participation?</label>
             <div style={{ display: "flex", gap: "10px" }}>
@@ -201,9 +211,9 @@ function AddModal({ onClose, onAdd, loading, isMobile }) {
         </div>
         <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
           <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: `1px solid ${BG.border}`, borderRadius: "12px", color: BG.textSub, cursor: "pointer", fontSize: "14px", fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
-          <button onClick={() => { if (!f.name || !f.date) return; onAdd(f); }} disabled={loading}
+          <button onClick={() => { if (!f.name || !f.date) return; onSubmit(f); }} disabled={loading}
             style={{ flex: 2, padding: "14px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "12px", color: "white", cursor: "pointer", fontSize: "14px", fontWeight: "700", letterSpacing: "0.06em", opacity: loading ? 0.7 : 1, fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 14px ${G.primary}40` }}>
-            {loading ? "SAVING..." : "REGISTER EVENT"}
+            {loading ? "SAVING..." : (isEdit ? "SAVE CHANGES" : "REGISTER EVENT")}
           </button>
         </div>
       </div>
@@ -232,7 +242,6 @@ function KpiCard({ label, value, sub, color, icon, delay }) {
   );
 }
 
-// Events by Type chart (replaces Budget by Region)
 function TypeBar({ label, value, max, color }) {
   const ref = useRef(); const [vis, setVis] = useState(false);
   useEffect(() => {
@@ -255,7 +264,6 @@ function TypeBar({ label, value, max, color }) {
 function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
   const completed = events.filter(e => e.status === "Completed").length;
   const upcoming = events.filter(e => e.status === "Upcoming").length;
-  const previousParticipated = events.filter(e => e.previous_participation).length;
   const uniqueAttendees = [...new Set(events.flatMap(e => typeof e.attendees === "string" ? e.attendees.split(",").map(a => a.trim()) : (e.attendees || [])))].filter(Boolean).length;
   const filtered = events.filter(e => filterStatus === "All" || e.status === filterStatus);
 
@@ -408,7 +416,7 @@ function MobileCharts({ events }) {
 function BottomNav({ tab, setTab, onAdd }) {
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: `rgba(10,22,40,0.97)`, backdropFilter: "blur(20px)", borderTop: `1px solid ${BG.border}`, paddingBottom: "env(safe-area-inset-bottom, 16px)", display: "flex", alignItems: "center", justifyContent: "space-around", height: "70px" }}>
-      {[{ id: "home", label: "Events", icon: "◈" }, null, { id: "charts", label: "Analytics", icon: "◉" }].map((item, i) => {
+      {[{ id: "home", label: "Events", icon: "◈" }, null, { id: "charts", label: "Analytics", icon: "◉" }].map((item) => {
         if (!item) return (
           <button key="add" onClick={onAdd} style={{ width: "52px", height: "52px", borderRadius: "50%", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}50`, WebkitTapHighlightColor: "transparent", marginTop: "-20px" }}>
             <span style={{ fontSize: "28px", color: "white", fontWeight: "300", lineHeight: 1 }}>+</span>
@@ -430,6 +438,7 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [selected, setSelected] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null); // event being edited
   const [activeRegion, setActiveRegion] = useState(null);
   const [filterStatus, setFilterStatus] = useState("All");
   const [mobileTab, setMobileTab] = useState("home");
@@ -460,10 +469,32 @@ export default function App() {
     setSaving(false);
   }
 
+  async function handleUpdate(f) {
+    setSaving(true);
+    const { data, error } = await supabase.from("events").update({
+      name: f.name, type: f.type, date: f.date, location: f.location,
+      region: f.region, objective: f.objective, attendees: f.attendees,
+      participation: f.participation, status: f.status,
+      highlight: f.highlight, previous_participation: f.previous_participation,
+    }).eq("id", editing.id).select();
+    if (error) { alert("Error updating: " + error.message); }
+    else {
+      setEvents(prev => prev.map(e => e.id === editing.id ? data[0] : e));
+      setEditing(null);
+      setSelected(null);
+    }
+    setSaving(false);
+  }
+
   async function handleDelete(id) {
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) { alert("Error deleting: " + error.message); }
     else { setEvents(prev => prev.filter(e => e.id !== id)); setSelected(null); }
+  }
+
+  function handleEditClick(event) {
+    setEditing(event);
+    setSelected(null);
   }
 
   const filtered = useMemo(() => events.filter(e => {
@@ -577,7 +608,6 @@ export default function App() {
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr 1fr", gap: "16px", marginBottom: "20px" }}>
-                  {/* World Map */}
                   <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Global Footprint</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "16px" }}>Event Presence by Region</div>
@@ -613,7 +643,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Participation Roles */}
                   <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Breakdown</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "16px" }}>Participation Roles</div>
@@ -635,7 +664,6 @@ export default function App() {
                     ) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No events yet</div>}
                   </div>
 
-                  {/* Events by Type - NEW */}
                   <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Distribution</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "18px" }}>Events by Type</div>
@@ -647,7 +675,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Events Table */}
                 <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                   <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BG.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.15)" }}>
                     <div>
@@ -658,8 +685,8 @@ export default function App() {
                     </div>
                     <div style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.08em" }}>CLICK ANY ROW TO VIEW DETAILS</div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2.4fr 1.3fr 1.5fr 1fr 0.9fr 0.9fr", padding: "10px 28px", borderBottom: `1px solid ${BG.border}`, background: "rgba(0,0,0,0.1)" }}>
-                    {["Event", "Date & Location", "Objective", "Role", "Delegation", "Previous"].map(h => (
+                  <div style={{ display: "grid", gridTemplateColumns: "2.2fr 1.2fr 1.4fr 1fr 0.9fr 1.1fr", padding: "10px 28px", borderBottom: `1px solid ${BG.border}`, background: "rgba(0,0,0,0.1)" }}>
+                    {["Event", "Date & Location", "Objective", "Role", "Delegation", "Previous Participation"].map(h => (
                       <div key={h} style={{ fontSize: "9px", color: BG.textMuted, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600" }}>{h}</div>
                     ))}
                   </div>
@@ -670,7 +697,7 @@ export default function App() {
                     const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
                     return (
                       <div key={event.id} onClick={() => setSelected(event)}
-                        style={{ display: "grid", gridTemplateColumns: "2.4fr 1.3fr 1.5fr 1fr 0.9fr 0.9fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
+                        style={{ display: "grid", gridTemplateColumns: "2.2fr 1.2fr 1.4fr 1fr 0.9fr 1.1fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(0,166,81,0.04)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -722,8 +749,9 @@ export default function App() {
         </>
       )}
 
-      {selected && <EventModal event={selected} onClose={() => setSelected(null)} onDelete={handleDelete} isMobile={isMobile} />}
-      {adding && <AddModal onClose={() => setAdding(false)} onAdd={handleAdd} loading={saving} isMobile={isMobile} />}
+      {selected && <EventModal event={selected} onClose={() => setSelected(null)} onDelete={handleDelete} onEdit={handleEditClick} isMobile={isMobile} />}
+      {adding && <EventForm onClose={() => setAdding(false)} onSubmit={handleAdd} loading={saving} isMobile={isMobile} />}
+      {editing && <EventForm initial={{ ...editing, date: editing.date || "" }} onClose={() => setEditing(null)} onSubmit={handleUpdate} loading={saving} isMobile={isMobile} isEdit />}
     </div>
   );
 }
