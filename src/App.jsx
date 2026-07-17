@@ -27,9 +27,10 @@ const CYAN = "#06B6D4";
 const CORAL = "#F87171";
 const LILAC = "#A78BFA";
 
-// PASSWORD — change this here to update the password
-const APP_PASSWORD = "iktva2026";
-const AUTH_KEY = "pscm_events_authenticated";
+// PASSWORDS — change these here to update
+const ADMIN_PASSWORD = "iktvaadmin";
+const VIEWER_PASSWORD = "iktva2026";
+const AUTH_KEY = "pscm_events_auth_role";
 
 const PART_COLOR = {
   Exhibitor: "#10B981", Speaker: "#06B6D4", Sponsor: "#FBBF24",
@@ -128,9 +129,12 @@ function LoginScreen({ onAuth }) {
 
   function handleSubmit(e) {
     e?.preventDefault();
-    if (password === APP_PASSWORD) {
-      try { sessionStorage.setItem(AUTH_KEY, "true"); } catch (err) {}
-      onAuth();
+    if (password === ADMIN_PASSWORD) {
+      try { sessionStorage.setItem(AUTH_KEY, "admin"); } catch (err) {}
+      onAuth("admin");
+    } else if (password === VIEWER_PASSWORD) {
+      try { sessionStorage.setItem(AUTH_KEY, "viewer"); } catch (err) {}
+      onAuth("viewer");
     } else {
       setError(true);
       setShake(true);
@@ -151,7 +155,6 @@ function LoginScreen({ onAuth }) {
         body{margin:0;overflow-x:hidden;}
       `}</style>
 
-      {/* Ambient background glows */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
         <div style={{ position: "absolute", top: "-10%", left: "10%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(16,185,129,0.1) 0%,transparent 65%)", borderRadius: "50%" }} />
         <div style={{ position: "absolute", bottom: "-10%", right: "10%", width: "400px", height: "400px", background: "radial-gradient(circle,rgba(251,191,36,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
@@ -161,21 +164,18 @@ function LoginScreen({ onAuth }) {
       <form onSubmit={handleSubmit} style={{ position: "relative", zIndex: 1, background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: "20px", padding: "40px 32px", maxWidth: "420px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", animation: shake ? "shake 0.4s" : "fadeIn 0.6s ease" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: `linear-gradient(90deg,${G.dark},${G.primary},${G.light})`, borderRadius: "20px 20px 0 0" }} />
 
-        {/* Logo */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px", animation: "float 3s ease-in-out infinite" }}>
           <div style={{ width: "64px", height: "64px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "18px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${G.primary}50` }}>
             <span style={{ fontSize: "28px", color: "white", fontWeight: "800" }}>✦</span>
           </div>
         </div>
 
-        {/* Title */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: "700", marginBottom: "8px" }}>Procurement & Supply Chain</div>
           <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: BG.text, letterSpacing: "-0.02em" }}>P&SCM Events Tracker</h1>
           <p style={{ margin: "8px 0 0", fontSize: "13px", color: BG.textSub }}>Enter access code to continue</p>
         </div>
 
-        {/* Password input */}
         <div style={{ marginBottom: "8px" }}>
           <label style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: "8px", fontWeight: "600" }}>Access Code</label>
           <input
@@ -206,7 +206,6 @@ function LoginScreen({ onAuth }) {
           )}
         </div>
 
-        {/* Submit button */}
         <button type="submit"
           style={{ width: "100%", padding: "16px", marginTop: "20px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "12px", color: "white", cursor: "pointer", fontSize: "14px", fontWeight: "700", letterSpacing: "0.1em", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 16px ${G.primary}40`, transition: "transform 0.15s" }}
           onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"}
@@ -215,7 +214,6 @@ function LoginScreen({ onAuth }) {
           UNLOCK DASHBOARD
         </button>
 
-        {/* Footer */}
         <div style={{ textAlign: "center", marginTop: "24px", fontSize: "10px", color: BG.textMuted, letterSpacing: "0.15em" }}>
           P&SCM · CONFIDENTIAL
         </div>
@@ -248,7 +246,7 @@ function RadialChart({ data, size = 140 }) {
   );
 }
 
-function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
+function EventModal({ event, onClose, onDelete, onEdit, isMobile, isAdmin }) {
   if (!event) return null;
   const pc = PART_COLOR[event.participation] || G.primary;
   const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
@@ -296,21 +294,25 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
           ))}
         </div>
         <div style={{ fontSize: "9px", color: BG.textMuted, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "10px", fontWeight: "600" }}>Delegation · {attendeeList.length} Members</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: isAdmin ? "20px" : "0" }}>
           {attendeeList.map(a => (
             <span key={a} style={{ background: G.pale, border: `1px solid ${G.mid}`, color: G.light, borderRadius: "20px", padding: "5px 12px", fontSize: "12px", fontWeight: "500" }}>{a}</span>
           ))}
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={() => onEdit(event)}
-            style={{ flex: 2, padding: "12px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "10px", color: "white", cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "700", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 12px ${G.primary}40` }}>
-            ✎ EDIT EVENT
-          </button>
-          <button onClick={() => onDelete(event.id)}
-            style={{ flex: 1, padding: "12px", background: `rgba(248,113,113,0.08)`, border: `1px solid rgba(248,113,113,0.25)`, borderRadius: "10px", color: CORAL, cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
-            DELETE
-          </button>
-        </div>
+
+        {/* ADMIN ONLY: Edit + Delete buttons */}
+        {isAdmin && (
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button onClick={() => onEdit(event)}
+              style={{ flex: 2, padding: "12px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "10px", color: "white", cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "700", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 12px ${G.primary}40` }}>
+              ✎ EDIT EVENT
+            </button>
+            <button onClick={() => onDelete(event.id)}
+              style={{ flex: 1, padding: "12px", background: `rgba(248,113,113,0.08)`, border: `1px solid rgba(248,113,113,0.25)`, borderRadius: "10px", color: CORAL, cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
+              DELETE
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -526,7 +528,7 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: "50px 20px" }}>
             <div style={{ fontSize: "32px", opacity: 0.2, marginBottom: "12px" }}>✦</div>
-            <div style={{ fontSize: "16px", color: BG.textSub, fontWeight: "500" }}>No events yet — tap + to add one!</div>
+            <div style={{ fontSize: "16px", color: BG.textSub, fontWeight: "500" }}>No events yet</div>
           </div>
         )}
       </div>
@@ -596,10 +598,14 @@ function MobileCharts({ events }) {
   );
 }
 
-function BottomNav({ tab, setTab, onAdd }) {
+function BottomNav({ tab, setTab, onAdd, isAdmin }) {
+  const items = isAdmin
+    ? [{ id: "home", label: "Events", icon: "◈" }, null, { id: "charts", label: "Analytics", icon: "◉" }]
+    : [{ id: "home", label: "Events", icon: "◈" }, { id: "charts", label: "Analytics", icon: "◉" }];
+
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: `rgba(15,31,26,0.97)`, backdropFilter: "blur(20px)", borderTop: `1px solid ${BG.border}`, paddingBottom: "env(safe-area-inset-bottom, 16px)", display: "flex", alignItems: "center", justifyContent: "space-around", height: "70px" }}>
-      {[{ id: "home", label: "Events", icon: "◈" }, null, { id: "charts", label: "Analytics", icon: "◉" }].map((item) => {
+      {items.map((item) => {
         if (!item) return (
           <button key="add" onClick={onAdd} style={{ width: "52px", height: "52px", borderRadius: "50%", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}50`, WebkitTapHighlightColor: "transparent", marginTop: "-20px" }}>
             <span style={{ fontSize: "28px", color: "white", fontWeight: "300", lineHeight: 1 }}>+</span>
@@ -617,11 +623,15 @@ function BottomNav({ tab, setTab, onAdd }) {
 }
 
 export default function App() {
-  // Check if already authenticated in this session
-  const [authenticated, setAuthenticated] = useState(() => {
-    try { return sessionStorage.getItem(AUTH_KEY) === "true"; } catch (err) { return false; }
+  // Check auth role — "admin", "viewer", or null
+  const [role, setRole] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem(AUTH_KEY);
+      return stored === "admin" || stored === "viewer" ? stored : null;
+    } catch (err) { return null; }
   });
 
+  const isAdmin = role === "admin";
   const isMobile = useIsMobile();
   const [events, setEvents] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -634,7 +644,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => { if (authenticated) fetchEvents(); }, [authenticated]);
+  useEffect(() => { if (role) fetchEvents(); }, [role]);
 
   async function fetchEvents() {
     setLoadingData(true);
@@ -687,9 +697,9 @@ export default function App() {
     setSelected(null);
   }
 
-  // SHOW LOGIN SCREEN if not authenticated
-  if (!authenticated) {
-    return <LoginScreen onAuth={() => setAuthenticated(true)} />;
+  // Show LOGIN if not authenticated
+  if (!role) {
+    return <LoginScreen onAuth={setRole} />;
   }
 
   const filtered = events.filter(e => {
@@ -732,7 +742,7 @@ export default function App() {
               </div>
               <div>
                 <div style={{ fontSize: "15px", fontWeight: "800", color: BG.text, letterSpacing: "-0.02em", lineHeight: 1.2 }}>P&SCM Events</div>
-                <div style={{ fontSize: "9px", color: G.primary, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "600" }}>Tracker</div>
+                <div style={{ fontSize: "9px", color: isAdmin ? G.primary : AMBER, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "600" }}>{isAdmin ? "Admin" : "View only"}</div>
               </div>
             </div>
             <div style={{ fontSize: "12px", color: BG.textMuted, fontWeight: "500" }}>{events.length} events</div>
@@ -748,7 +758,7 @@ export default function App() {
               {mobileTab === "charts" && <MobileCharts events={events} />}
             </>
           )}
-          <BottomNav tab={mobileTab} setTab={setMobileTab} onAdd={() => setAdding(true)} />
+          <BottomNav tab={mobileTab} setTab={setMobileTab} onAdd={() => setAdding(true)} isAdmin={isAdmin} />
         </>
       )}
 
@@ -772,14 +782,20 @@ export default function App() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {/* Role badge */}
+                <div style={{ padding: "6px 12px", background: isAdmin ? G.pale : "rgba(251,191,36,0.1)", border: `1px solid ${isAdmin ? G.mid : "rgba(251,191,36,0.3)"}`, borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.1em", color: isAdmin ? G.light : AMBER, marginRight: "8px" }}>
+                  {isAdmin ? "◆ ADMIN" : "◉ VIEW ONLY"}
+                </div>
                 {["All", "Completed", "Upcoming"].map(s => (
                   <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: "7px 16px", borderRadius: "20px", border: `1px solid`, borderColor: filterStatus === s ? G.primary : BG.border, background: filterStatus === s ? G.pale : "transparent", color: filterStatus === s ? G.light : BG.textSub, fontSize: "11px", cursor: "pointer", letterSpacing: "0.08em", fontWeight: "600", transition: "all 0.2s", fontFamily: "'Outfit',sans-serif" }}>
                     {s.toUpperCase()}
                   </button>
                 ))}
-                <button onClick={() => setAdding(true)} style={{ marginLeft: "8px", padding: "9px 20px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "10px", color: "white", fontSize: "12px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", boxShadow: `0 4px 14px ${G.primary}40`, fontFamily: "'Outfit',sans-serif" }}>
-                  + ADD EVENT
-                </button>
+                {isAdmin && (
+                  <button onClick={() => setAdding(true)} style={{ marginLeft: "8px", padding: "9px 20px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "10px", color: "white", fontSize: "12px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", boxShadow: `0 4px 14px ${G.primary}40`, fontFamily: "'Outfit',sans-serif" }}>
+                    + ADD EVENT
+                  </button>
+                )}
               </div>
             </div>
           </header>
@@ -932,7 +948,7 @@ export default function App() {
                     <div style={{ padding: "60px", textAlign: "center" }}>
                       <div style={{ fontSize: "32px", marginBottom: "14px", color: G.primary, opacity: 0.3 }}>✦</div>
                       <div style={{ fontSize: "18px", fontWeight: "500", color: BG.textSub }}>
-                        {events.length === 0 ? "No events yet — add your first event!" : "No events match the current filters"}
+                        {events.length === 0 ? "No events yet" : "No events match the current filters"}
                       </div>
                     </div>
                   )}
@@ -944,9 +960,9 @@ export default function App() {
         </>
       )}
 
-      {selected && <EventModal event={selected} onClose={() => setSelected(null)} onDelete={handleDelete} onEdit={handleEditClick} isMobile={isMobile} />}
-      {adding && <EventForm onClose={() => setAdding(false)} onSubmit={handleAdd} loading={saving} isMobile={isMobile} />}
-      {editing && <EventForm initial={{ ...editing, start_date: editing.start_date || "", end_date: editing.end_date || "", website: editing.website || "" }} onClose={() => setEditing(null)} onSubmit={handleUpdate} loading={saving} isMobile={isMobile} isEdit />}
+      {selected && <EventModal event={selected} onClose={() => setSelected(null)} onDelete={handleDelete} onEdit={handleEditClick} isMobile={isMobile} isAdmin={isAdmin} />}
+      {adding && isAdmin && <EventForm onClose={() => setAdding(false)} onSubmit={handleAdd} loading={saving} isMobile={isMobile} />}
+      {editing && isAdmin && <EventForm initial={{ ...editing, start_date: editing.start_date || "", end_date: editing.end_date || "", website: editing.website || "" }} onClose={() => setEditing(null)} onSubmit={handleUpdate} loading={saving} isMobile={isMobile} isEdit />}
     </div>
   );
 }
