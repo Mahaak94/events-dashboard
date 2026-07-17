@@ -41,7 +41,6 @@ const REGION_DOTS = [
   { region: "Africa", x: "50%", y: "62%" },
 ];
 
-// Date formatting helpers
 function fmtShort(d) {
   if (!d) return "";
   return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -70,6 +69,13 @@ function calcDays(start, end) {
 function daysLabel(start, end) {
   const d = calcDays(start, end);
   return d === 1 ? "1 day" : `${d} days`;
+}
+function normalizeUrl(url) {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+  return `https://${trimmed}`;
 }
 
 function useCountUp(target, duration = 1400, trigger = true) {
@@ -132,6 +138,7 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
   if (!event) return null;
   const pc = PART_COLOR[event.participation] || G.primary;
   const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
+  const websiteUrl = normalizeUrl(event.website);
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(10px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 300, padding: isMobile ? "0" : "24px" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", padding: "28px", maxWidth: isMobile ? "100%" : "580px", width: "100%", position: "relative", boxShadow: `0 -20px 60px rgba(0,0,0,0.4)`, maxHeight: isMobile ? "88vh" : "90vh", overflowY: "auto", paddingBottom: isMobile ? "40px" : "28px" }}>
@@ -144,6 +151,15 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
         <p style={{ margin: "0 0 20px", fontSize: "13px", color: BG.textSub }}>
           📅 {fmtRange(event.start_date, event.end_date)} <span style={{ color: G.light, fontWeight: "600" }}>· {daysLabel(event.start_date, event.end_date)}</span>
         </p>
+
+        {/* Visit Website button */}
+        {websiteUrl && (
+          <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "12px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "10px", color: "white", cursor: "pointer", fontSize: "13px", fontWeight: "700", letterSpacing: "0.08em", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 12px ${G.primary}40`, textDecoration: "none", marginBottom: "16px", boxSizing: "border-box" }}>
+            🔗 VISIT WEBSITE
+          </a>
+        )}
+
         <div style={{ background: G.pale, border: `1px solid ${G.mid}`, borderRadius: "12px", padding: "14px", marginBottom: "16px" }}>
           <div style={{ fontSize: "9px", color: G.light, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "8px", fontWeight: "600" }}>Strategic Objective</div>
           <p style={{ margin: 0, fontSize: "13px", color: BG.text, lineHeight: "1.7" }}>{event.objective}</p>
@@ -191,7 +207,7 @@ function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
   const [f, setF] = useState(initial || {
     name: "", type: "Conference", start_date: "", end_date: "", location: "", region: "Middle East",
     objective: "", attendees: "", participation: "Exhibitor",
-    status: "Upcoming", highlight: "", previous_participation: false,
+    status: "Upcoming", highlight: "", previous_participation: false, website: "",
   });
   const s = (k, v) => setF(p => ({ ...p, [k]: v }));
   const inp = { width: "100%", background: BG.muted, border: `1px solid ${BG.border}`, borderRadius: "10px", padding: "12px", color: BG.text, fontSize: "14px", outline: "none", boxSizing: "border-box", fontFamily: "'Outfit',sans-serif" };
@@ -214,7 +230,6 @@ function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
             <div><label style={lbl}>Region</label><select style={inp} value={f.region} onChange={e => s("region", e.target.value)}>{["Middle East", "Europe", "Americas", "Asia", "Africa"].map(r => <option key={r}>{r}</option>)}</select></div>
           </div>
 
-          {/* Start Date + End Date + duration */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <div>
               <label style={lbl}>Start Date</label>
@@ -232,6 +247,13 @@ function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
           )}
 
           <div><label style={lbl}>Location</label><input style={inp} value={f.location} onChange={e => s("location", e.target.value)} placeholder="City, Country" /></div>
+
+          {/* Website URL */}
+          <div>
+            <label style={lbl}>Event Website <span style={{ opacity: 0.5, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+            <input style={inp} value={f.website || ""} onChange={e => s("website", e.target.value)} placeholder="www.example.com" />
+          </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <div><label style={lbl}>Participation Role</label><select style={inp} value={f.participation} onChange={e => s("participation", e.target.value)}>{Object.keys(PART_COLOR).map(t => <option key={t}>{t}</option>)}</select></div>
             <div><label style={lbl}>Status</label><select style={inp} value={f.status} onChange={e => s("status", e.target.value)}>{["Upcoming", "Completed", "Cancelled"].map(x => <option key={x}>{x}</option>)}</select></div>
@@ -358,16 +380,16 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
               <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "3px", background: lineColor, boxShadow: `0 0 8px ${lineColor}60` }} />
               <div style={{ paddingLeft: "10px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                  <div style={{ flex: 1, paddingRight: "10px" }}>
-                    <div style={{ fontSize: "15px", fontWeight: "700", color: BG.text, letterSpacing: "-0.01em", marginBottom: "2px" }}>{event.name}</div>
-                    <div style={{ fontSize: "11px", color: BG.textSub }}>📍 {event.location}</div>
-                    <div style={{ fontSize: "11px", color: BG.textSub, marginTop: "2px" }}>
+                  <div style={{ flex: 1, paddingRight: "10px", textAlign: "left" }}>
+                    <div style={{ fontSize: "15px", fontWeight: "700", color: BG.text, letterSpacing: "-0.01em", marginBottom: "2px", textAlign: "left" }}>{event.name}</div>
+                    <div style={{ fontSize: "11px", color: BG.textSub, textAlign: "left" }}>📍 {event.location}</div>
+                    <div style={{ fontSize: "11px", color: BG.textSub, marginTop: "2px", textAlign: "left" }}>
                       📅 {fmtRange(event.start_date, event.end_date)} · <span style={{ color: G.light }}>{daysLabel(event.start_date, event.end_date)}</span>
                     </div>
                   </div>
                   <span style={{ background: `${pc}15`, color: pc, border: `1px solid ${pc}30`, borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: "700", whiteSpace: "nowrap" }}>{event.participation}</span>
                 </div>
-                <div style={{ fontSize: "12px", color: BG.textSub, lineHeight: "1.5", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{event.objective}</div>
+                <div style={{ fontSize: "12px", color: BG.textSub, lineHeight: "1.5", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textAlign: "left" }}>{event.objective}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <div style={{ display: "flex" }}>
@@ -512,6 +534,7 @@ export default function App() {
       location: f.location, region: f.region, objective: f.objective,
       attendees: f.attendees, participation: f.participation, status: f.status,
       highlight: f.highlight, previous_participation: f.previous_participation,
+      website: f.website || null,
     }]).select();
     if (error) { alert("Error saving: " + error.message); }
     else { setEvents(prev => [data[0], ...prev]); setAdding(false); }
@@ -525,6 +548,7 @@ export default function App() {
       location: f.location, region: f.region, objective: f.objective,
       attendees: f.attendees, participation: f.participation, status: f.status,
       highlight: f.highlight, previous_participation: f.previous_participation,
+      website: f.website || null,
     }).eq("id", editing.id).select();
     if (error) { alert("Error updating: " + error.message); }
     else {
@@ -749,19 +773,19 @@ export default function App() {
                         style={{ display: "grid", gridTemplateColumns: "2.2fr 1.4fr 1.3fr 1fr 0.9fr 1.1fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(0,166,81,0.04)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", textAlign: "left" }}>
                           <div style={{ width: "3px", height: "36px", borderRadius: "2px", background: lineColor, flexShrink: 0 }} />
-                          <div>
-                            <div style={{ fontSize: "14px", color: BG.text, fontWeight: "600", marginBottom: "2px" }}>{event.name}</div>
-                            <div style={{ fontSize: "10px", color: BG.textMuted, fontWeight: "500" }}>{(event.type || "").toUpperCase()} · 📍 {event.location}</div>
+                          <div style={{ textAlign: "left", minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: "14px", color: BG.text, fontWeight: "600", marginBottom: "2px", textAlign: "left" }}>{event.name}</div>
+                            <div style={{ fontSize: "10px", color: BG.textMuted, fontWeight: "500", textAlign: "left" }}>{(event.type || "").toUpperCase()} · 📍 {event.location}</div>
                           </div>
                         </div>
-                        <div>
+                        <div style={{ textAlign: "left" }}>
                           <div style={{ fontSize: "12px", color: BG.text, fontWeight: "500", marginBottom: "2px" }}>{fmtRange(event.start_date, event.end_date)}</div>
                           <div style={{ fontSize: "10px", color: G.light, fontWeight: "600" }}>⏱ {daysLabel(event.start_date, event.end_date)}</div>
                         </div>
-                        <div style={{ fontSize: "11px", color: BG.textSub, lineHeight: "1.5", paddingRight: "14px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{event.objective}</div>
-                        <div><span style={{ background: `${pc}15`, color: pc, border: `1px solid ${pc}30`, borderRadius: "6px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>{event.participation}</span></div>
+                        <div style={{ fontSize: "11px", color: BG.textSub, lineHeight: "1.5", paddingRight: "14px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textAlign: "left" }}>{event.objective}</div>
+                        <div style={{ textAlign: "left" }}><span style={{ background: `${pc}15`, color: pc, border: `1px solid ${pc}30`, borderRadius: "6px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>{event.participation}</span></div>
                         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                           <div style={{ display: "flex" }}>
                             {attendeeList.slice(0, 3).map((a, idx) => (
@@ -772,7 +796,7 @@ export default function App() {
                           </div>
                           <span style={{ fontSize: "11px", color: BG.textMuted }}>{attendeeList.length}</span>
                         </div>
-                        <div>
+                        <div style={{ textAlign: "left" }}>
                           {event.previous_participation ? (
                             <span style={{ background: G.pale, color: G.light, border: `1px solid ${G.mid}`, borderRadius: "20px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>↻ YES</span>
                           ) : (
@@ -800,7 +824,7 @@ export default function App() {
 
       {selected && <EventModal event={selected} onClose={() => setSelected(null)} onDelete={handleDelete} onEdit={handleEditClick} isMobile={isMobile} />}
       {adding && <EventForm onClose={() => setAdding(false)} onSubmit={handleAdd} loading={saving} isMobile={isMobile} />}
-      {editing && <EventForm initial={{ ...editing, start_date: editing.start_date || "", end_date: editing.end_date || "" }} onClose={() => setEditing(null)} onSubmit={handleUpdate} loading={saving} isMobile={isMobile} isEdit />}
+      {editing && <EventForm initial={{ ...editing, start_date: editing.start_date || "", end_date: editing.end_date || "", website: editing.website || "" }} onClose={() => setEditing(null)} onSubmit={handleUpdate} loading={saving} isMobile={isMobile} isEdit />}
     </div>
   );
 }
