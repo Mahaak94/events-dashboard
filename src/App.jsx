@@ -3,30 +3,33 @@ import { supabase } from "./supabaseClient";
 
 // FOREST DEPTH PALETTE
 const G = {
-  primary: "#10B981",      // emerald
-  light: "#34D399",        // brighter emerald
+  primary: "#10B981",
+  light: "#34D399",
   pale: "rgba(16,185,129,0.1)",
   mid: "rgba(16,185,129,0.22)",
-  dark: "#059669",         // deeper emerald
+  dark: "#059669",
 };
 
 const BG = {
-  base: "#0F1F1A",         // deep forest
-  surface: "#152A24",      // slightly lifted
-  card: "#1A2F28",         // card surface
+  base: "#0F1F1A",
+  surface: "#152A24",
+  card: "#1A2F28",
   border: "rgba(255,255,255,0.06)",
   borderAccent: "rgba(16,185,129,0.25)",
-  muted: "#22403A",        // muted panel
-  text: "#E4EDE9",         // pale mint text
-  textSub: "#7BA599",      // sage subtext
-  textMuted: "#4A6B60",    // dimmer sage
+  muted: "#22403A",
+  text: "#E4EDE9",
+  textSub: "#7BA599",
+  textMuted: "#4A6B60",
 };
 
-// Accent colors
 const AMBER = "#FBBF24";
 const CYAN = "#06B6D4";
 const CORAL = "#F87171";
 const LILAC = "#A78BFA";
+
+// PASSWORD — change this here to update the password
+const APP_PASSWORD = "iktva2026";
+const AUTH_KEY = "pscm_events_authenticated";
 
 const PART_COLOR = {
   Exhibitor: "#10B981", Speaker: "#06B6D4", Sponsor: "#FBBF24",
@@ -115,6 +118,110 @@ function useIsMobile() {
     };
   }, []);
   return isMobile;
+}
+
+// LOGIN SCREEN
+function LoginScreen({ onAuth }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  function handleSubmit(e) {
+    e?.preventDefault();
+    if (password === APP_PASSWORD) {
+      try { sessionStorage.setItem(AUTH_KEY, "true"); } catch (err) {}
+      onAuth();
+    } else {
+      setError(true);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: BG.base, fontFamily: "'Outfit',sans-serif", color: BG.text, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", position: "relative", overflow: "hidden" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      <style>{`
+        *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        input:focus{outline:none;border-color:${G.primary}!important;box-shadow:0 0 0 3px ${G.pale}}
+        input::placeholder{color:${BG.textMuted}}
+        body{margin:0;overflow-x:hidden;}
+      `}</style>
+
+      {/* Ambient background glows */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "-10%", left: "10%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(16,185,129,0.1) 0%,transparent 65%)", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", bottom: "-10%", right: "10%", width: "400px", height: "400px", background: "radial-gradient(circle,rgba(251,191,36,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${BG.muted} 1px,transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.2 }} />
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ position: "relative", zIndex: 1, background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: "20px", padding: "40px 32px", maxWidth: "420px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", animation: shake ? "shake 0.4s" : "fadeIn 0.6s ease" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: `linear-gradient(90deg,${G.dark},${G.primary},${G.light})`, borderRadius: "20px 20px 0 0" }} />
+
+        {/* Logo */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px", animation: "float 3s ease-in-out infinite" }}>
+          <div style={{ width: "64px", height: "64px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "18px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${G.primary}50` }}>
+            <span style={{ fontSize: "28px", color: "white", fontWeight: "800" }}>✦</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: "700", marginBottom: "8px" }}>Procurement & Supply Chain</div>
+          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: BG.text, letterSpacing: "-0.02em" }}>P&SCM Events Tracker</h1>
+          <p style={{ margin: "8px 0 0", fontSize: "13px", color: BG.textSub }}>Enter access code to continue</p>
+        </div>
+
+        {/* Password input */}
+        <div style={{ marginBottom: "8px" }}>
+          <label style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: "8px", fontWeight: "600" }}>Access Code</label>
+          <input
+            type="password"
+            value={password}
+            onChange={e => { setPassword(e.target.value); setError(false); }}
+            placeholder="••••••••"
+            autoFocus
+            style={{
+              width: "100%",
+              background: BG.muted,
+              border: `1px solid ${error ? CORAL : BG.border}`,
+              borderRadius: "12px",
+              padding: "16px",
+              color: BG.text,
+              fontSize: "16px",
+              outline: "none",
+              boxSizing: "border-box",
+              fontFamily: "'Outfit',sans-serif",
+              letterSpacing: "0.1em",
+              transition: "all 0.2s"
+            }}
+          />
+          {error && (
+            <div style={{ marginTop: "10px", fontSize: "12px", color: CORAL, textAlign: "center", fontWeight: "500" }}>
+              ✕ Incorrect access code
+            </div>
+          )}
+        </div>
+
+        {/* Submit button */}
+        <button type="submit"
+          style={{ width: "100%", padding: "16px", marginTop: "20px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", borderRadius: "12px", color: "white", cursor: "pointer", fontSize: "14px", fontWeight: "700", letterSpacing: "0.1em", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 16px ${G.primary}40`, transition: "transform 0.15s" }}
+          onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"}
+          onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
+          onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+          UNLOCK DASHBOARD
+        </button>
+
+        {/* Footer */}
+        <div style={{ textAlign: "center", marginTop: "24px", fontSize: "10px", color: BG.textMuted, letterSpacing: "0.15em" }}>
+          P&SCM · CONFIDENTIAL
+        </div>
+      </form>
+    </div>
+  );
 }
 
 function RadialChart({ data, size = 140 }) {
@@ -510,6 +617,11 @@ function BottomNav({ tab, setTab, onAdd }) {
 }
 
 export default function App() {
+  // Check if already authenticated in this session
+  const [authenticated, setAuthenticated] = useState(() => {
+    try { return sessionStorage.getItem(AUTH_KEY) === "true"; } catch (err) { return false; }
+  });
+
   const isMobile = useIsMobile();
   const [events, setEvents] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -522,7 +634,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => { fetchEvents(); }, []);
+  useEffect(() => { if (authenticated) fetchEvents(); }, [authenticated]);
 
   async function fetchEvents() {
     setLoadingData(true);
@@ -575,11 +687,16 @@ export default function App() {
     setSelected(null);
   }
 
-  const filtered = useMemo(() => events.filter(e => {
+  // SHOW LOGIN SCREEN if not authenticated
+  if (!authenticated) {
+    return <LoginScreen onAuth={() => setAuthenticated(true)} />;
+  }
+
+  const filtered = events.filter(e => {
     if (filterStatus !== "All" && e.status !== filterStatus) return false;
     if (activeRegion && e.region !== activeRegion) return false;
     return true;
-  }), [events, filterStatus, activeRegion]);
+  });
 
   const uniqueAttendees = [...new Set(events.flatMap(e => typeof e.attendees === "string" ? e.attendees.split(",").map(a => a.trim()) : (e.attendees || [])))].filter(Boolean).length;
   const completed = events.filter(e => e.status === "Completed").length;
