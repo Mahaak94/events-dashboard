@@ -29,6 +29,10 @@ const REGION_COLOR = {
   "Middle East": "#00A651", Europe: "#00B4D8",
   Americas: "#F4A261", Asia: "#9B72CF", Africa: "#E76F51",
 };
+const TYPE_COLOR = {
+  Conference: "#00A651", Forum: "#00B4D8", "Supplier Forum": "#F4A261",
+  Exhibition: "#9B72CF", Workshop: "#E76F51",
+};
 const REGION_DOTS = [
   { region: "Middle East", x: "62%", y: "48%" },
   { region: "Europe", x: "50%", y: "28%" },
@@ -37,11 +41,6 @@ const REGION_DOTS = [
   { region: "Africa", x: "50%", y: "62%" },
 ];
 
-function fmt(v) {
-  if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
-  if (v >= 1000) return `${(v / 1000).toFixed(0)}K`;
-  return `${v}`;
-}
 function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
@@ -64,8 +63,7 @@ function useCountUp(target, duration = 1400, trigger = true) {
 }
 
 function useIsMobile() {
-  const detect = () =>
-    window.screen.width < 768 || window.innerWidth < 768;
+  const detect = () => window.screen.width < 768 || window.innerWidth < 768;
   const [isMobile, setIsMobile] = useState(detect);
   useEffect(() => {
     const handler = () => setIsMobile(detect());
@@ -78,8 +76,6 @@ function useIsMobile() {
   }, []);
   return isMobile;
 }
-
-// ── SHARED COMPONENTS ──────────────────────────────────────────
 
 function RadialChart({ data, size = 140 }) {
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -102,25 +98,6 @@ function RadialChart({ data, size = 140 }) {
       <text x={cx} y={cy - 4} textAnchor="middle" fill={G.primary} fontSize="22" fontWeight="700" fontFamily="'Outfit',sans-serif">{total}</text>
       <text x={cx} y={cy + 12} textAnchor="middle" fill={BG.textMuted} fontSize="8" letterSpacing="2" fontFamily="'Outfit',sans-serif">TOTAL</text>
     </svg>
-  );
-}
-
-function HBar({ label, value, max, color }) {
-  const ref = useRef(); const [vis, setVis] = useState(false);
-  useEffect(() => {
-    const o = new IntersectionObserver(([e]) => e.isIntersecting && setVis(true), { threshold: 0.3 });
-    if (ref.current) o.observe(ref.current); return () => o.disconnect();
-  }, []);
-  return (
-    <div ref={ref} style={{ marginBottom: "14px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-        <span style={{ fontSize: "12px", color: BG.textSub, fontWeight: "500" }}>{label}</span>
-        <span style={{ fontSize: "12px", color, fontWeight: "700" }}>SAR {fmt(value)}</span>
-      </div>
-      <div style={{ height: "5px", background: BG.muted, borderRadius: "3px", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: vis ? `${(value / max) * 100}%` : "0%", background: `linear-gradient(90deg,${color},${color}80)`, borderRadius: "3px", transition: "width 1.2s cubic-bezier(0.4,0,0.2,1)", boxShadow: `0 0 8px ${color}50` }} />
-      </div>
-    </div>
   );
 }
 
@@ -148,7 +125,11 @@ function EventModal({ event, onClose, onDelete, isMobile }) {
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
-          {[{ l: "Role", v: event.participation, c: pc }, { l: "Budget", v: `SAR ${fmt(event.budget)}`, c: G.primary }, { l: "Status", v: event.status, c: event.status === "Completed" ? G.primary : "#00B4D8" }].map(f => (
+          {[
+            { l: "Role", v: event.participation, c: pc },
+            { l: "Status", v: event.status, c: event.status === "Completed" ? G.primary : "#00B4D8" },
+            { l: "Previous", v: event.previous_participation ? "Yes" : "No", c: event.previous_participation ? G.primary : BG.textSub },
+          ].map(f => (
             <div key={f.l} style={{ background: BG.muted, border: `1px solid ${BG.border}`, borderRadius: "10px", padding: "12px", textAlign: "center" }}>
               <div style={{ fontSize: "9px", color: BG.textMuted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "5px", fontWeight: "600" }}>{f.l}</div>
               <div style={{ fontSize: "13px", fontWeight: "700", color: f.c }}>{f.v}</div>
@@ -170,7 +151,11 @@ function EventModal({ event, onClose, onDelete, isMobile }) {
 }
 
 function AddModal({ onClose, onAdd, loading, isMobile }) {
-  const [f, setF] = useState({ name: "", type: "Conference", date: "", location: "", region: "Middle East", objective: "", attendees: "", participation: "Exhibitor", budget: "", status: "Upcoming", highlight: "" });
+  const [f, setF] = useState({
+    name: "", type: "Conference", date: "", location: "", region: "Middle East",
+    objective: "", attendees: "", participation: "Exhibitor",
+    status: "Upcoming", highlight: "", previous_participation: false,
+  });
   const s = (k, v) => setF(p => ({ ...p, [k]: v }));
   const inp = { width: "100%", background: BG.muted, border: `1px solid ${BG.border}`, borderRadius: "10px", padding: "12px", color: BG.text, fontSize: "14px", outline: "none", boxSizing: "border-box", fontFamily: "'Outfit',sans-serif" };
   const lbl = { fontSize: "10px", color: BG.textMuted, letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: "6px", fontWeight: "600" };
@@ -183,7 +168,7 @@ function AddModal({ onClose, onAdd, loading, isMobile }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div><label style={lbl}>Event Name</label><input style={inp} value={f.name} onChange={e => s("name", e.target.value)} placeholder="e.g. ADIPEC 2025" /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div><label style={lbl}>Type</label><select style={inp} value={f.type} onChange={e => s("type", e.target.value)}>{["Conference", "Forum", "Supplier Forum", "Exhibition", "Workshop"].map(t => <option key={t}>{t}</option>)}</select></div>
+            <div><label style={lbl}>Type</label><select style={inp} value={f.type} onChange={e => s("type", e.target.value)}>{Object.keys(TYPE_COLOR).map(t => <option key={t}>{t}</option>)}</select></div>
             <div><label style={lbl}>Region</label><select style={inp} value={f.region} onChange={e => s("region", e.target.value)}>{["Middle East", "Europe", "Americas", "Asia", "Africa"].map(r => <option key={r}>{r}</option>)}</select></div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -194,7 +179,22 @@ function AddModal({ onClose, onAdd, loading, isMobile }) {
             <div><label style={lbl}>Participation Role</label><select style={inp} value={f.participation} onChange={e => s("participation", e.target.value)}>{Object.keys(PART_COLOR).map(t => <option key={t}>{t}</option>)}</select></div>
             <div><label style={lbl}>Status</label><select style={inp} value={f.status} onChange={e => s("status", e.target.value)}>{["Upcoming", "Completed", "Cancelled"].map(x => <option key={x}>{x}</option>)}</select></div>
           </div>
-          <div><label style={lbl}>Budget (SAR)</label><input style={inp} type="number" value={f.budget} onChange={e => s("budget", e.target.value)} /></div>
+
+          {/* Previous Participation Toggle */}
+          <div>
+            <label style={lbl}>Previous Participation?</label>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button type="button" onClick={() => s("previous_participation", true)}
+                style={{ flex: 1, padding: "12px", borderRadius: "10px", border: `1px solid`, borderColor: f.previous_participation ? G.primary : BG.border, background: f.previous_participation ? G.pale : BG.muted, color: f.previous_participation ? G.light : BG.textSub, cursor: "pointer", fontSize: "13px", fontWeight: "600", fontFamily: "'Outfit',sans-serif", letterSpacing: "0.05em" }}>
+                YES
+              </button>
+              <button type="button" onClick={() => s("previous_participation", false)}
+                style={{ flex: 1, padding: "12px", borderRadius: "10px", border: `1px solid`, borderColor: !f.previous_participation ? "#E76F51" : BG.border, background: !f.previous_participation ? "rgba(231,111,81,0.08)" : BG.muted, color: !f.previous_participation ? "#E76F51" : BG.textSub, cursor: "pointer", fontSize: "13px", fontWeight: "600", fontFamily: "'Outfit',sans-serif", letterSpacing: "0.05em" }}>
+                NO
+              </button>
+            </div>
+          </div>
+
           <div><label style={lbl}>Strategic Objective</label><textarea style={{ ...inp, minHeight: "80px", resize: "vertical" }} value={f.objective} onChange={e => s("objective", e.target.value)} /></div>
           <div><label style={lbl}>Key Highlight</label><input style={inp} value={f.highlight} onChange={e => s("highlight", e.target.value)} placeholder="e.g. 200+ suppliers engaged" /></div>
           <div><label style={lbl}>Attendees (comma-separated)</label><input style={inp} value={f.attendees} onChange={e => s("attendees", e.target.value)} placeholder="Name 1, Name 2, Name 3" /></div>
@@ -211,8 +211,7 @@ function AddModal({ onClose, onAdd, loading, isMobile }) {
   );
 }
 
-// ── DESKTOP KPI CARD ───────────────────────────────────────────
-function KpiCard({ label, value, sub, color, icon, delay, isFormatted }) {
+function KpiCard({ label, value, sub, color, icon, delay }) {
   const ref = useRef();
   const [vis, setVis] = useState(false);
   useEffect(() => {
@@ -226,27 +225,45 @@ function KpiCard({ label, value, sub, color, icon, delay, isFormatted }) {
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(90deg,transparent,${color},transparent)` }} />
       <div style={{ position: "absolute", top: "18px", right: "18px", width: "38px", height: "38px", background: `${color}15`, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px", border: `1px solid ${color}25` }}>{icon}</div>
       <div style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "12px", fontWeight: "600" }}>{label}</div>
-      <div style={{ fontSize: "30px", fontWeight: "700", color: BG.text, lineHeight: 1, marginBottom: "6px", letterSpacing: "-0.02em" }}>
-        {isFormatted ? `SAR ${fmt(value)}` : n.toLocaleString()}
-      </div>
+      <div style={{ fontSize: "30px", fontWeight: "700", color: BG.text, lineHeight: 1, marginBottom: "6px", letterSpacing: "-0.02em" }}>{n.toLocaleString()}</div>
       <div style={{ fontSize: "12px", color, fontWeight: "500" }}>{sub}</div>
       <div style={{ position: "absolute", bottom: 0, left: 0, width: "40%", height: "1px", background: `linear-gradient(90deg,${color}50,transparent)` }} />
     </div>
   );
 }
 
-// ── MOBILE VIEWS ───────────────────────────────────────────────
+// Events by Type chart (replaces Budget by Region)
+function TypeBar({ label, value, max, color }) {
+  const ref = useRef(); const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const o = new IntersectionObserver(([e]) => e.isIntersecting && setVis(true), { threshold: 0.3 });
+    if (ref.current) o.observe(ref.current); return () => o.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{ marginBottom: "14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+        <span style={{ fontSize: "12px", color: BG.textSub, fontWeight: "500" }}>{label}</span>
+        <span style={{ fontSize: "12px", color, fontWeight: "700" }}>{value}</span>
+      </div>
+      <div style={{ height: "5px", background: BG.muted, borderRadius: "3px", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: vis ? `${(value / max) * 100}%` : "0%", background: `linear-gradient(90deg,${color},${color}80)`, borderRadius: "3px", transition: "width 1.2s cubic-bezier(0.4,0,0.2,1)", boxShadow: `0 0 8px ${color}50` }} />
+      </div>
+    </div>
+  );
+}
+
 function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
-  const totalBudget = events.reduce((s, e) => s + (e.budget || 0), 0);
   const completed = events.filter(e => e.status === "Completed").length;
   const upcoming = events.filter(e => e.status === "Upcoming").length;
+  const previousParticipated = events.filter(e => e.previous_participation).length;
+  const uniqueAttendees = [...new Set(events.flatMap(e => typeof e.attendees === "string" ? e.attendees.split(",").map(a => a.trim()) : (e.attendees || [])))].filter(Boolean).length;
   const filtered = events.filter(e => filterStatus === "All" || e.status === filterStatus);
 
   const kpis = [
     { label: "Total Events", value: events.length, color: G.primary },
     { label: "Completed", value: completed, color: "#00B4D8" },
     { label: "Upcoming", value: upcoming, color: "#F4A261" },
-    { label: "Budget", value: `SAR ${fmt(totalBudget)}`, color: "#9B72CF" },
+    { label: "Delegation", value: uniqueAttendees, color: "#9B72CF" },
   ];
 
   return (
@@ -305,7 +322,11 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
                     </div>
                     <span style={{ fontSize: "11px", color: BG.textMuted }}>{attendeeList.length} members</span>
                   </div>
-                  <div style={{ fontSize: "14px", color: G.primary, fontWeight: "700" }}>SAR {fmt(event.budget)}</div>
+                  {event.previous_participation && (
+                    <span style={{ fontSize: "10px", color: G.primary, fontWeight: "600", background: G.pale, border: `1px solid ${G.mid}`, borderRadius: "12px", padding: "3px 8px" }}>
+                      ↻ Returning
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -324,13 +345,15 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
 
 function MobileCharts({ events }) {
   const partData = Object.entries(events.reduce((a, e) => { a[e.participation] = (a[e.participation] || 0) + 1; return a; }, {})).map(([label, value]) => ({ label, value, color: PART_COLOR[label] || G.primary }));
-  const budgetByRegion = Object.entries(events.reduce((a, e) => { a[e.region] = (a[e.region] || 0) + (e.budget || 0); return a; }, {})).sort((a, b) => b[1] - a[1]);
-  const maxB = Math.max(...budgetByRegion.map(b => b[1]), 1);
+  const typeData = Object.entries(events.reduce((a, e) => { a[e.type] = (a[e.type] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1]);
+  const maxT = Math.max(...typeData.map(t => t[1]), 1);
   const regionCounts = events.reduce((a, e) => { a[e.region] = (a[e.region] || 0) + 1; return a; }, {});
+  const returning = events.filter(e => e.previous_participation).length;
 
   return (
     <div style={{ padding: "20px 16px 90px" }}>
       <div style={{ fontSize: "18px", fontWeight: "800", color: BG.text, letterSpacing: "-0.02em", marginBottom: "20px" }}>Analytics</div>
+
       <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "20px", marginBottom: "16px" }}>
         <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600", marginBottom: "14px" }}>Participation Roles</div>
         {partData.length > 0 ? (
@@ -352,11 +375,11 @@ function MobileCharts({ events }) {
       </div>
 
       <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "20px", marginBottom: "16px" }}>
-        <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600", marginBottom: "14px" }}>Budget by Region</div>
-        {budgetByRegion.length > 0 ? budgetByRegion.map(([r, v]) => <HBar key={r} label={r} value={v} max={maxB} color={REGION_COLOR[r] || G.primary} />) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No data yet</div>}
+        <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600", marginBottom: "14px" }}>Events by Type</div>
+        {typeData.length > 0 ? typeData.map(([t, c]) => <TypeBar key={t} label={t} value={c} max={maxT} color={TYPE_COLOR[t] || G.primary} />) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No data yet</div>}
       </div>
 
-      <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "20px" }}>
+      <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "20px", marginBottom: "16px" }}>
         <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600", marginBottom: "14px" }}>Events by Region</div>
         {Object.entries(regionCounts).map(([r, c]) => (
           <div key={r} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
@@ -368,6 +391,15 @@ function MobileCharts({ events }) {
           </div>
         ))}
         {Object.keys(regionCounts).length === 0 && <div style={{ color: BG.textMuted, fontSize: "13px" }}>No data yet</div>}
+      </div>
+
+      <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "20px" }}>
+        <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600", marginBottom: "10px" }}>Returning Events</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+          <div style={{ fontSize: "36px", fontWeight: "800", color: G.primary, letterSpacing: "-0.02em" }}>{returning}</div>
+          <div style={{ fontSize: "13px", color: BG.textSub }}>of {events.length} ({events.length > 0 ? Math.round(returning / events.length * 100) : 0}%)</div>
+        </div>
+        <div style={{ fontSize: "11px", color: BG.textMuted, marginTop: "4px" }}>Events with prior participation history</div>
       </div>
     </div>
   );
@@ -393,7 +425,6 @@ function BottomNav({ tab, setTab, onAdd }) {
   );
 }
 
-// ── MAIN APP ───────────────────────────────────────────────────
 export default function App() {
   const isMobile = useIsMobile();
   const [events, setEvents] = useState([]);
@@ -421,8 +452,8 @@ export default function App() {
     const { data, error } = await supabase.from("events").insert([{
       name: f.name, type: f.type, date: f.date, location: f.location,
       region: f.region, objective: f.objective, attendees: f.attendees,
-      participation: f.participation, budget: parseInt(f.budget) || 0,
-      status: f.status, highlight: f.highlight,
+      participation: f.participation, status: f.status,
+      highlight: f.highlight, previous_participation: f.previous_participation,
     }]).select();
     if (error) { alert("Error saving: " + error.message); }
     else { setEvents(prev => [data[0], ...prev]); setAdding(false); }
@@ -441,14 +472,14 @@ export default function App() {
     return true;
   }), [events, filterStatus, activeRegion]);
 
-  const totalBudget = events.reduce((s, e) => s + (e.budget || 0), 0);
   const uniqueAttendees = [...new Set(events.flatMap(e => typeof e.attendees === "string" ? e.attendees.split(",").map(a => a.trim()) : (e.attendees || [])))].filter(Boolean).length;
   const completed = events.filter(e => e.status === "Completed").length;
   const upcoming = events.filter(e => e.status === "Upcoming").length;
+  const returning = events.filter(e => e.previous_participation).length;
   const regionCounts = events.reduce((a, e) => { a[e.region] = (a[e.region] || 0) + 1; return a; }, {});
   const partData = Object.entries(events.reduce((a, e) => { a[e.participation] = (a[e.participation] || 0) + 1; return a; }, {})).map(([label, value]) => ({ label, value, color: PART_COLOR[label] || G.primary }));
-  const budgetByRegion = Object.entries(events.reduce((a, e) => { a[e.region] = (a[e.region] || 0) + (e.budget || 0); return a; }, {})).sort((a, b) => b[1] - a[1]);
-  const maxB = Math.max(...budgetByRegion.map(b => b[1]), 1);
+  const typeData = Object.entries(events.reduce((a, e) => { a[e.type] = (a[e.type] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1]);
+  const maxT = Math.max(...typeData.map(t => t[1]), 1);
 
   return (
     <div style={{ minHeight: "100vh", background: BG.base, fontFamily: "'Outfit',sans-serif", color: BG.text }}>
@@ -466,7 +497,6 @@ export default function App() {
         body{margin:0;overflow-x:hidden;}
       `}</style>
 
-      {/* ── MOBILE ── */}
       {isMobile && (
         <>
           <div style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(10,22,40,0.97)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -481,7 +511,6 @@ export default function App() {
             </div>
             <div style={{ fontSize: "12px", color: BG.textMuted, fontWeight: "500" }}>{events.length} events</div>
           </div>
-
           {loadingData ? (
             <div style={{ textAlign: "center", padding: "80px 20px" }}>
               <div style={{ fontSize: "32px", animation: "spin 1s linear infinite", display: "inline-block", marginBottom: "16px", color: G.primary }}>✦</div>
@@ -497,7 +526,6 @@ export default function App() {
         </>
       )}
 
-      {/* ── DESKTOP ── */}
       {!isMobile && (
         <>
           <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
@@ -544,11 +572,12 @@ export default function App() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "20px" }}>
                   <KpiCard label="Total Events" value={events.length} sub={`${upcoming} upcoming · ${completed} completed`} color={G.primary} icon="✦" delay={0} />
                   <KpiCard label="Completed" value={completed} sub={`${events.length > 0 ? Math.round(completed / events.length * 100) : 0}% completion rate`} color="#00B4D8" icon="◉" delay={0.08} />
-                  <KpiCard label="Total Investment" value={totalBudget} sub={`SAR ${fmt(events.length > 0 ? Math.round(totalBudget / events.length) : 0)} avg per event`} color="#F4A261" icon="◈" delay={0.16} isFormatted />
+                  <KpiCard label="Returning Events" value={returning} sub={`${events.length > 0 ? Math.round(returning / events.length * 100) : 0}% previously attended`} color="#F4A261" icon="↻" delay={0.16} />
                   <KpiCard label="Delegation Members" value={uniqueAttendees} sub="unique participants" color="#9B72CF" icon="◎" delay={0.24} />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+                  {/* World Map */}
                   <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Global Footprint</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "16px" }}>Event Presence by Region</div>
@@ -584,6 +613,7 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Participation Roles */}
                   <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Breakdown</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "16px" }}>Participation Roles</div>
@@ -605,17 +635,19 @@ export default function App() {
                     ) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No events yet</div>}
                   </div>
 
+                  {/* Events by Type - NEW */}
                   <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-                    <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Investment</div>
-                    <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "18px" }}>Budget by Region</div>
-                    {budgetByRegion.length > 0 ? budgetByRegion.map(([r, v]) => <HBar key={r} label={r} value={v} max={maxB} color={REGION_COLOR[r] || G.primary} />) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No data yet</div>}
+                    <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Distribution</div>
+                    <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "18px" }}>Events by Type</div>
+                    {typeData.length > 0 ? typeData.map(([t, c]) => <TypeBar key={t} label={t} value={c} max={maxT} color={TYPE_COLOR[t] || G.primary} />) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No data yet</div>}
                     <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: `1px solid ${BG.border}`, display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "600" }}>Total</span>
-                      <span style={{ fontSize: "16px", color: G.primary, fontWeight: "700" }}>SAR {fmt(totalBudget)}</span>
+                      <span style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "600" }}>Total Types</span>
+                      <span style={{ fontSize: "16px", color: G.primary, fontWeight: "700" }}>{typeData.length}</span>
                     </div>
                   </div>
                 </div>
 
+                {/* Events Table */}
                 <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                   <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BG.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.15)" }}>
                     <div>
@@ -626,8 +658,8 @@ export default function App() {
                     </div>
                     <div style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.08em" }}>CLICK ANY ROW TO VIEW DETAILS</div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2.4fr 1.3fr 1.4fr 1fr 0.9fr 1fr", padding: "10px 28px", borderBottom: `1px solid ${BG.border}`, background: "rgba(0,0,0,0.1)" }}>
-                    {["Event", "Date & Location", "Objective", "Role", "Delegation", "Budget"].map(h => (
+                  <div style={{ display: "grid", gridTemplateColumns: "2.4fr 1.3fr 1.5fr 1fr 0.9fr 0.9fr", padding: "10px 28px", borderBottom: `1px solid ${BG.border}`, background: "rgba(0,0,0,0.1)" }}>
+                    {["Event", "Date & Location", "Objective", "Role", "Delegation", "Previous"].map(h => (
                       <div key={h} style={{ fontSize: "9px", color: BG.textMuted, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600" }}>{h}</div>
                     ))}
                   </div>
@@ -638,7 +670,7 @@ export default function App() {
                     const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
                     return (
                       <div key={event.id} onClick={() => setSelected(event)}
-                        style={{ display: "grid", gridTemplateColumns: "2.4fr 1.3fr 1.4fr 1fr 0.9fr 1fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
+                        style={{ display: "grid", gridTemplateColumns: "2.4fr 1.3fr 1.5fr 1fr 0.9fr 0.9fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(0,166,81,0.04)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -665,8 +697,11 @@ export default function App() {
                           <span style={{ fontSize: "11px", color: BG.textMuted }}>{attendeeList.length}</span>
                         </div>
                         <div>
-                          <div style={{ fontSize: "14px", color: G.primary, fontWeight: "700" }}>SAR {fmt(event.budget)}</div>
-                          <div style={{ fontSize: "10px", color: lineColor, marginTop: "2px", letterSpacing: "0.08em", fontWeight: "600" }}>{(event.status || "").toUpperCase()}</div>
+                          {event.previous_participation ? (
+                            <span style={{ background: G.pale, color: G.light, border: `1px solid ${G.mid}`, borderRadius: "20px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>↻ YES</span>
+                          ) : (
+                            <span style={{ background: "rgba(231,111,81,0.08)", color: "#E76F51", border: "1px solid rgba(231,111,81,0.2)", borderRadius: "20px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>NO</span>
+                          )}
                         </div>
                       </div>
                     );
