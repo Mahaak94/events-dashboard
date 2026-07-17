@@ -1,37 +1,44 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 
+// FOREST DEPTH PALETTE
 const G = {
-  primary: "#00A651",
-  light: "#00C962",
-  pale: "rgba(0,166,81,0.1)",
-  mid: "rgba(0,166,81,0.2)",
-  dark: "#007A3D",
+  primary: "#10B981",      // emerald
+  light: "#34D399",        // brighter emerald
+  pale: "rgba(16,185,129,0.1)",
+  mid: "rgba(16,185,129,0.22)",
+  dark: "#059669",         // deeper emerald
 };
 
 const BG = {
-  base: "#0A1628",
-  surface: "#0F2040",
-  card: "#122348",
-  border: "rgba(255,255,255,0.07)",
-  borderAccent: "rgba(0,166,81,0.25)",
-  muted: "#1A3155",
-  text: "#E2EAF4",
-  textSub: "#7A9BBE",
-  textMuted: "#3D5A7A",
+  base: "#0F1F1A",         // deep forest
+  surface: "#152A24",      // slightly lifted
+  card: "#1A2F28",         // card surface
+  border: "rgba(255,255,255,0.06)",
+  borderAccent: "rgba(16,185,129,0.25)",
+  muted: "#22403A",        // muted panel
+  text: "#E4EDE9",         // pale mint text
+  textSub: "#7BA599",      // sage subtext
+  textMuted: "#4A6B60",    // dimmer sage
 };
 
+// Accent colors
+const AMBER = "#FBBF24";
+const CYAN = "#06B6D4";
+const CORAL = "#F87171";
+const LILAC = "#A78BFA";
+
 const PART_COLOR = {
-  Exhibitor: "#00A651", Speaker: "#00B4D8", Sponsor: "#F4A261",
-  Organizer: "#9B72CF", Attendee: "#E76F51",
+  Exhibitor: "#10B981", Speaker: "#06B6D4", Sponsor: "#FBBF24",
+  Organizer: "#A78BFA", Attendee: "#F87171",
 };
 const REGION_COLOR = {
-  "Middle East": "#00A651", Europe: "#00B4D8",
-  Americas: "#F4A261", Asia: "#9B72CF", Africa: "#E76F51",
+  "Middle East": "#10B981", Europe: "#06B6D4",
+  Americas: "#FBBF24", Asia: "#A78BFA", Africa: "#F87171",
 };
 const TYPE_COLOR = {
-  Conference: "#00A651", Forum: "#00B4D8", "Supplier Forum": "#F4A261",
-  Exhibition: "#9B72CF", Workshop: "#E76F51",
+  Conference: "#10B981", Forum: "#06B6D4", "Supplier Forum": "#FBBF24",
+  Exhibition: "#A78BFA", Workshop: "#F87171",
 };
 const REGION_DOTS = [
   { region: "Middle East", x: "62%", y: "48%" },
@@ -140,8 +147,8 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
   const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
   const websiteUrl = normalizeUrl(event.website);
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(10px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 300, padding: isMobile ? "0" : "24px" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", padding: "28px", maxWidth: isMobile ? "100%" : "580px", width: "100%", position: "relative", boxShadow: `0 -20px 60px rgba(0,0,0,0.4)`, maxHeight: isMobile ? "88vh" : "90vh", overflowY: "auto", paddingBottom: isMobile ? "40px" : "28px" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(10px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 300, padding: isMobile ? "0" : "24px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", padding: "28px", maxWidth: isMobile ? "100%" : "580px", width: "100%", position: "relative", boxShadow: `0 -20px 60px rgba(0,0,0,0.5)`, maxHeight: isMobile ? "88vh" : "90vh", overflowY: "auto", paddingBottom: isMobile ? "40px" : "28px" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: `linear-gradient(90deg,${G.dark},${G.primary},${G.light})`, borderRadius: "20px 20px 0 0" }} />
         {isMobile && <div style={{ width: "40px", height: "4px", background: BG.muted, borderRadius: "2px", margin: "0 auto 20px" }} />}
         <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: BG.muted, border: `1px solid ${BG.border}`, color: BG.textSub, borderRadius: "8px", width: "32px", height: "32px", cursor: "pointer", fontSize: "18px" }}>×</button>
@@ -152,7 +159,6 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
           📅 {fmtRange(event.start_date, event.end_date)} <span style={{ color: G.light, fontWeight: "600" }}>· {daysLabel(event.start_date, event.end_date)}</span>
         </p>
 
-        {/* Visit Website button */}
         {websiteUrl && (
           <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "12px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "10px", color: "white", cursor: "pointer", fontSize: "13px", fontWeight: "700", letterSpacing: "0.08em", fontFamily: "'Outfit',sans-serif", boxShadow: `0 4px 12px ${G.primary}40`, textDecoration: "none", marginBottom: "16px", boxSizing: "border-box" }}>
@@ -165,15 +171,15 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
           <p style={{ margin: 0, fontSize: "13px", color: BG.text, lineHeight: "1.7" }}>{event.objective}</p>
         </div>
         {event.highlight && (
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(0,166,81,0.08)", border: `1px solid ${G.mid}`, borderRadius: "10px", padding: "12px 14px", marginBottom: "16px" }}>
-            <span style={{ color: G.light, fontSize: "14px" }}>✦</span>
-            <span style={{ fontSize: "13px", color: G.light, fontWeight: "500" }}>{event.highlight}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: `rgba(251,191,36,0.08)`, border: `1px solid rgba(251,191,36,0.25)`, borderRadius: "10px", padding: "12px 14px", marginBottom: "16px" }}>
+            <span style={{ color: AMBER, fontSize: "14px" }}>✦</span>
+            <span style={{ fontSize: "13px", color: AMBER, fontWeight: "500" }}>{event.highlight}</span>
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
           {[
             { l: "Role", v: event.participation, c: pc },
-            { l: "Status", v: event.status, c: event.status === "Completed" ? G.primary : "#00B4D8" },
+            { l: "Status", v: event.status, c: event.status === "Completed" ? G.primary : CYAN },
             { l: "Previous", v: event.previous_participation ? "Yes" : "No", c: event.previous_participation ? G.primary : BG.textSub },
           ].map(f => (
             <div key={f.l} style={{ background: BG.muted, border: `1px solid ${BG.border}`, borderRadius: "10px", padding: "12px", textAlign: "center" }}>
@@ -194,7 +200,7 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile }) {
             ✎ EDIT EVENT
           </button>
           <button onClick={() => onDelete(event.id)}
-            style={{ flex: 1, padding: "12px", background: "rgba(231,111,81,0.08)", border: "1px solid rgba(231,111,81,0.25)", borderRadius: "10px", color: "#E76F51", cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
+            style={{ flex: 1, padding: "12px", background: `rgba(248,113,113,0.08)`, border: `1px solid rgba(248,113,113,0.25)`, borderRadius: "10px", color: CORAL, cursor: "pointer", fontSize: "13px", letterSpacing: "0.08em", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
             DELETE
           </button>
         </div>
@@ -216,7 +222,7 @@ function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
   const days = f.start_date ? calcDays(f.start_date, f.end_date) : 0;
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(10px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 300, padding: isMobile ? "0" : "24px" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(10px)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 300, padding: isMobile ? "0" : "24px" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: `linear-gradient(150deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.borderAccent}`, borderRadius: isMobile ? "20px 20px 0 0" : "20px", padding: "28px", maxWidth: isMobile ? "100%" : "560px", width: "100%", maxHeight: isMobile ? "92vh" : "90vh", overflowY: "auto", paddingBottom: isMobile ? "40px" : "28px" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: `linear-gradient(90deg,${G.dark},${G.primary},${G.light})`, borderRadius: "20px 20px 0 0" }} />
         {isMobile && <div style={{ width: "40px", height: "4px", background: BG.muted, borderRadius: "2px", margin: "0 auto 20px" }} />}
@@ -248,7 +254,6 @@ function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
 
           <div><label style={lbl}>Location</label><input style={inp} value={f.location} onChange={e => s("location", e.target.value)} placeholder="City, Country" /></div>
 
-          {/* Website URL */}
           <div>
             <label style={lbl}>Event Website <span style={{ opacity: 0.5, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
             <input style={inp} value={f.website || ""} onChange={e => s("website", e.target.value)} placeholder="www.example.com" />
@@ -267,7 +272,7 @@ function EventForm({ initial, onClose, onSubmit, loading, isMobile, isEdit }) {
                 YES
               </button>
               <button type="button" onClick={() => s("previous_participation", false)}
-                style={{ flex: 1, padding: "12px", borderRadius: "10px", border: `1px solid`, borderColor: !f.previous_participation ? "#E76F51" : BG.border, background: !f.previous_participation ? "rgba(231,111,81,0.08)" : BG.muted, color: !f.previous_participation ? "#E76F51" : BG.textSub, cursor: "pointer", fontSize: "13px", fontWeight: "600", fontFamily: "'Outfit',sans-serif", letterSpacing: "0.05em" }}>
+                style={{ flex: 1, padding: "12px", borderRadius: "10px", border: `1px solid`, borderColor: !f.previous_participation ? CORAL : BG.border, background: !f.previous_participation ? `rgba(248,113,113,0.08)` : BG.muted, color: !f.previous_participation ? CORAL : BG.textSub, cursor: "pointer", fontSize: "13px", fontWeight: "600", fontFamily: "'Outfit',sans-serif", letterSpacing: "0.05em" }}>
                 NO
               </button>
             </div>
@@ -299,7 +304,7 @@ function KpiCard({ label, value, sub, color, icon, delay }) {
   }, []);
   const n = useCountUp(typeof value === "number" ? value : 0, 1400, vis);
   return (
-    <div ref={ref} style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", position: "relative", overflow: "hidden", boxShadow: `0 4px 24px rgba(0,0,0,0.3)`, opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(14px)", transition: `opacity 0.5s ${delay}s, transform 0.5s ${delay}s` }}>
+    <div ref={ref} style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", position: "relative", overflow: "hidden", boxShadow: `0 4px 24px rgba(0,0,0,0.35)`, opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(14px)", transition: `opacity 0.5s ${delay}s, transform 0.5s ${delay}s` }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(90deg,transparent,${color},transparent)` }} />
       <div style={{ position: "absolute", top: "18px", right: "18px", width: "38px", height: "38px", background: `${color}15`, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px", border: `1px solid ${color}25` }}>{icon}</div>
       <div style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "12px", fontWeight: "600" }}>{label}</div>
@@ -337,9 +342,9 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
 
   const kpis = [
     { label: "Total Events", value: events.length, color: G.primary },
-    { label: "Completed", value: completed, color: "#00B4D8" },
-    { label: "Upcoming", value: upcoming, color: "#F4A261" },
-    { label: "Delegation", value: uniqueAttendees, color: "#9B72CF" },
+    { label: "Completed", value: completed, color: CYAN },
+    { label: "Upcoming", value: upcoming, color: AMBER },
+    { label: "Delegation", value: uniqueAttendees, color: LILAC },
   ];
 
   return (
@@ -372,7 +377,7 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
         {filtered.map(event => {
           const pc = PART_COLOR[event.participation] || G.primary;
           const done = event.status === "Completed";
-          const lineColor = done ? G.primary : "#00B4D8";
+          const lineColor = done ? G.primary : CYAN;
           const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
           return (
             <div key={event.id} onClick={() => onSelectEvent(event)}
@@ -394,7 +399,7 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <div style={{ display: "flex" }}>
                       {attendeeList.slice(0, 3).map((a, idx) => (
-                        <div key={idx} style={{ width: "22px", height: "22px", borderRadius: "50%", background: `hsl(${idx * 70 + 150},45%,35%)`, border: `2px solid ${BG.card}`, marginLeft: idx > 0 ? "-6px" : "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: "700" }}>
+                        <div key={idx} style={{ width: "22px", height: "22px", borderRadius: "50%", background: `hsl(${idx * 70 + 150},40%,32%)`, border: `2px solid ${BG.card}`, marginLeft: idx > 0 ? "-6px" : "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: "700" }}>
                           {a.charAt(0)}
                         </div>
                       ))}
@@ -486,7 +491,7 @@ function MobileCharts({ events }) {
 
 function BottomNav({ tab, setTab, onAdd }) {
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: `rgba(10,22,40,0.97)`, backdropFilter: "blur(20px)", borderTop: `1px solid ${BG.border}`, paddingBottom: "env(safe-area-inset-bottom, 16px)", display: "flex", alignItems: "center", justifyContent: "space-around", height: "70px" }}>
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: `rgba(15,31,26,0.97)`, backdropFilter: "blur(20px)", borderTop: `1px solid ${BG.border}`, paddingBottom: "env(safe-area-inset-bottom, 16px)", display: "flex", alignItems: "center", justifyContent: "space-around", height: "70px" }}>
       {[{ id: "home", label: "Events", icon: "◈" }, null, { id: "charts", label: "Analytics", icon: "◉" }].map((item) => {
         if (!item) return (
           <button key="add" onClick={onAdd} style={{ width: "52px", height: "52px", borderRadius: "50%", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}50`, WebkitTapHighlightColor: "transparent", marginTop: "-20px" }}>
@@ -603,7 +608,7 @@ export default function App() {
 
       {isMobile && (
         <>
-          <div style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(10,22,40,0.97)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(15,31,26,0.97)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "34px", height: "34px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 3px 10px ${G.primary}40` }}>
                 <span style={{ fontSize: "15px", color: "white", fontWeight: "800" }}>✦</span>
@@ -633,12 +638,12 @@ export default function App() {
       {!isMobile && (
         <>
           <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-            <div style={{ position: "absolute", top: "-15%", left: "15%", width: "600px", height: "600px", background: "radial-gradient(circle,rgba(0,166,81,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
-            <div style={{ position: "absolute", bottom: "5%", right: "5%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(0,180,216,0.04) 0%,transparent 65%)", borderRadius: "50%" }} />
-            <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${BG.muted} 1px,transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.3 }} />
+            <div style={{ position: "absolute", top: "-15%", left: "15%", width: "600px", height: "600px", background: "radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
+            <div style={{ position: "absolute", bottom: "5%", right: "5%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(251,191,36,0.04) 0%,transparent 65%)", borderRadius: "50%" }} />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${BG.muted} 1px,transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.25 }} />
           </div>
 
-          <header style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(10,22,40,0.92)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}` }}>
+          <header style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(15,31,26,0.92)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}` }}>
             <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 40px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                 <div style={{ width: "40px", height: "40px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}40` }}>
@@ -669,25 +674,25 @@ export default function App() {
                 <div style={{ fontSize: "18px", fontWeight: "500", color: BG.textSub }}>Loading events...</div>
               </div>
             )}
-            {error && <div style={{ background: "rgba(231,111,81,0.08)", border: "1px solid rgba(231,111,81,0.25)", borderRadius: "12px", padding: "16px 20px", marginBottom: "24px", color: "#E76F51", fontSize: "13px" }}>⚠️ {error}</div>}
+            {error && <div style={{ background: `rgba(248,113,113,0.08)`, border: `1px solid rgba(248,113,113,0.25)`, borderRadius: "12px", padding: "16px 20px", marginBottom: "24px", color: CORAL, fontSize: "13px" }}>⚠️ {error}</div>}
 
             {!loadingData && (
               <>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "20px" }}>
                   <KpiCard label="Total Events" value={events.length} sub={`${upcoming} upcoming · ${completed} completed`} color={G.primary} icon="✦" delay={0} />
-                  <KpiCard label="Completed" value={completed} sub={`${events.length > 0 ? Math.round(completed / events.length * 100) : 0}% completion rate`} color="#00B4D8" icon="◉" delay={0.08} />
-                  <KpiCard label="Returning Events" value={returning} sub={`${events.length > 0 ? Math.round(returning / events.length * 100) : 0}% previously attended`} color="#F4A261" icon="↻" delay={0.16} />
-                  <KpiCard label="Delegation Members" value={uniqueAttendees} sub="unique participants" color="#9B72CF" icon="◎" delay={0.24} />
+                  <KpiCard label="Completed" value={completed} sub={`${events.length > 0 ? Math.round(completed / events.length * 100) : 0}% completion rate`} color={CYAN} icon="◉" delay={0.08} />
+                  <KpiCard label="Returning Events" value={returning} sub={`${events.length > 0 ? Math.round(returning / events.length * 100) : 0}% previously attended`} color={AMBER} icon="↻" delay={0.16} />
+                  <KpiCard label="Delegation Members" value={uniqueAttendees} sub="unique participants" color={LILAC} icon="◎" delay={0.24} />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr 1fr", gap: "16px", marginBottom: "20px" }}>
-                  <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+                  <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.35)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Global Footprint</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "16px" }}>Event Presence by Region</div>
                     <div style={{ position: "relative", height: "148px", background: BG.base, borderRadius: "10px", border: `1px solid ${BG.border}`, overflow: "hidden", marginBottom: "14px" }}>
                       {[25, 50, 75].map(p => <div key={p} style={{ position: "absolute", left: `${p}%`, top: 0, bottom: 0, borderLeft: `1px solid ${BG.muted}` }} />)}
                       {[35, 65].map(p => <div key={p} style={{ position: "absolute", top: `${p}%`, left: 0, right: 0, borderTop: `1px solid ${BG.muted}` }} />)}
-                      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: `1px solid rgba(0,166,81,0.15)` }} />
+                      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: `1px solid rgba(16,185,129,0.15)` }} />
                       <div style={{ position: "absolute", bottom: "6px", right: "10px", fontSize: "8px", color: BG.textMuted }}>WORLD MAP</div>
                       {REGION_DOTS.map(dot => {
                         const count = regionCounts[dot.region] || 0;
@@ -716,7 +721,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+                  <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.35)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Breakdown</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "16px" }}>Participation Roles</div>
                     {partData.length > 0 ? (
@@ -737,7 +742,7 @@ export default function App() {
                     ) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No events yet</div>}
                   </div>
 
-                  <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+                  <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", padding: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.35)" }}>
                     <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Distribution</div>
                     <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text, marginBottom: "18px" }}>Events by Type</div>
                     {typeData.length > 0 ? typeData.map(([t, c]) => <TypeBar key={t} label={t} value={c} max={maxT} color={TYPE_COLOR[t] || G.primary} />) : <div style={{ color: BG.textMuted, fontSize: "13px" }}>No data yet</div>}
@@ -748,7 +753,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+                <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.35)" }}>
                   <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BG.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.15)" }}>
                     <div>
                       <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Events Registry</div>
@@ -766,12 +771,12 @@ export default function App() {
                   {filtered.map(event => {
                     const pc = PART_COLOR[event.participation] || G.primary;
                     const done = event.status === "Completed";
-                    const lineColor = done ? G.primary : "#00B4D8";
+                    const lineColor = done ? G.primary : CYAN;
                     const attendeeList = typeof event.attendees === "string" ? event.attendees.split(",").map(a => a.trim()).filter(Boolean) : (event.attendees || []);
                     return (
                       <div key={event.id} onClick={() => setSelected(event)}
                         style={{ display: "grid", gridTemplateColumns: "2.2fr 1.4fr 1.3fr 1fr 0.9fr 1.1fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "rgba(0,166,81,0.04)"}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(16,185,129,0.04)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px", textAlign: "left" }}>
                           <div style={{ width: "3px", height: "36px", borderRadius: "2px", background: lineColor, flexShrink: 0 }} />
@@ -789,7 +794,7 @@ export default function App() {
                         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                           <div style={{ display: "flex" }}>
                             {attendeeList.slice(0, 3).map((a, idx) => (
-                              <div key={idx} style={{ width: "24px", height: "24px", borderRadius: "50%", background: `hsl(${idx * 70 + 150},45%,35%)`, border: `2px solid ${BG.card}`, marginLeft: idx > 0 ? "-7px" : "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: "700" }}>
+                              <div key={idx} style={{ width: "24px", height: "24px", borderRadius: "50%", background: `hsl(${idx * 70 + 150},40%,32%)`, border: `2px solid ${BG.card}`, marginLeft: idx > 0 ? "-7px" : "0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: "700" }}>
                                 {a.charAt(0)}
                               </div>
                             ))}
@@ -800,7 +805,7 @@ export default function App() {
                           {event.previous_participation ? (
                             <span style={{ background: G.pale, color: G.light, border: `1px solid ${G.mid}`, borderRadius: "20px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>↻ YES</span>
                           ) : (
-                            <span style={{ background: "rgba(231,111,81,0.08)", color: "#E76F51", border: "1px solid rgba(231,111,81,0.2)", borderRadius: "20px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>NO</span>
+                            <span style={{ background: `rgba(248,113,113,0.08)`, color: CORAL, border: `1px solid rgba(248,113,113,0.2)`, borderRadius: "20px", padding: "4px 10px", fontSize: "10px", fontWeight: "700" }}>NO</span>
                           )}
                         </div>
                       </div>
