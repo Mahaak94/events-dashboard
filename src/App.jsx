@@ -27,7 +27,7 @@ const CYAN = "#06B6D4";
 const CORAL = "#F87171";
 const LILAC = "#A78BFA";
 
-// PASSWORDS — change these here to update
+// PASSWORDS
 const ADMIN_PASSWORD = "iktvaadmin";
 const VIEWER_PASSWORD = "iktva2026";
 const AUTH_KEY = "pscm_events_auth_role";
@@ -88,6 +88,10 @@ function normalizeUrl(url) {
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
   return `https://${trimmed}`;
 }
+function getEventYear(event) {
+  if (!event.start_date) return null;
+  return new Date(event.start_date).getFullYear();
+}
 
 function useCountUp(target, duration = 1400, trigger = true) {
   const [val, setVal] = useState(0);
@@ -121,7 +125,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-// LOGIN SCREEN
 function LoginScreen({ onAuth }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
@@ -300,7 +303,6 @@ function EventModal({ event, onClose, onDelete, onEdit, isMobile, isAdmin }) {
           ))}
         </div>
 
-        {/* ADMIN ONLY: Edit + Delete buttons */}
         {isAdmin && (
           <div style={{ display: "flex", gap: "10px" }}>
             <button onClick={() => onEdit(event)}
@@ -443,11 +445,15 @@ function TypeBar({ label, value, max, color }) {
   );
 }
 
-function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
+function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus, filterYear, setFilterYear, availableYears }) {
   const completed = events.filter(e => e.status === "Completed").length;
   const upcoming = events.filter(e => e.status === "Upcoming").length;
   const uniqueAttendees = [...new Set(events.flatMap(e => typeof e.attendees === "string" ? e.attendees.split(",").map(a => a.trim()) : (e.attendees || [])))].filter(Boolean).length;
-  const filtered = events.filter(e => filterStatus === "All" || e.status === filterStatus);
+  const filtered = events.filter(e => {
+    if (filterStatus !== "All" && e.status !== filterStatus) return false;
+    if (filterYear !== "All" && getEventYear(e) !== filterYear) return false;
+    return true;
+  });
 
   const kpis = [
     { label: "Total Events", value: events.length, color: G.primary },
@@ -470,13 +476,30 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", gap: "8px" }}>
+
+        {/* Status filter */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap" }}>
           {["All", "Completed", "Upcoming"].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: "6px 16px", borderRadius: "20px", border: `1px solid`, borderColor: filterStatus === s ? G.primary : BG.border, background: filterStatus === s ? G.pale : "transparent", color: filterStatus === s ? G.light : BG.textSub, fontSize: "11px", cursor: "pointer", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
               {s}
             </button>
           ))}
         </div>
+
+        {/* Year filter */}
+        {availableYears.length > 0 && (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: "9px", color: BG.textMuted, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "600" }}>Year:</span>
+            <button onClick={() => setFilterYear("All")} style={{ padding: "5px 12px", borderRadius: "16px", border: `1px solid`, borderColor: filterYear === "All" ? AMBER : BG.border, background: filterYear === "All" ? "rgba(251,191,36,0.1)" : "transparent", color: filterYear === "All" ? AMBER : BG.textSub, fontSize: "11px", cursor: "pointer", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
+              All
+            </button>
+            {availableYears.map(y => (
+              <button key={y} onClick={() => setFilterYear(y)} style={{ padding: "5px 12px", borderRadius: "16px", border: `1px solid`, borderColor: filterYear === y ? AMBER : BG.border, background: filterYear === y ? "rgba(251,191,36,0.1)" : "transparent", color: filterYear === y ? AMBER : BG.textSub, fontSize: "11px", cursor: "pointer", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
+                {y}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ padding: "16px" }}>
@@ -528,7 +551,7 @@ function MobileHome({ events, onSelectEvent, filterStatus, setFilterStatus }) {
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: "50px 20px" }}>
             <div style={{ fontSize: "32px", opacity: 0.2, marginBottom: "12px" }}>✦</div>
-            <div style={{ fontSize: "16px", color: BG.textSub, fontWeight: "500" }}>No events yet</div>
+            <div style={{ fontSize: "16px", color: BG.textSub, fontWeight: "500" }}>No events match the filters</div>
           </div>
         )}
       </div>
@@ -623,7 +646,6 @@ function BottomNav({ tab, setTab, onAdd, isAdmin }) {
 }
 
 export default function App() {
-  // Check auth role — "admin", "viewer", or null
   const [role, setRole] = useState(() => {
     try {
       const stored = sessionStorage.getItem(AUTH_KEY);
@@ -639,6 +661,7 @@ export default function App() {
   const [editing, setEditing] = useState(null);
   const [activeRegion, setActiveRegion] = useState(null);
   const [filterStatus, setFilterStatus] = useState("All");
+  const [filterYear, setFilterYear] = useState("All");
   const [mobileTab, setMobileTab] = useState("home");
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -697,13 +720,19 @@ export default function App() {
     setSelected(null);
   }
 
-  // Show LOGIN if not authenticated
+  // Auto-generate available years from events (sorted descending)
+  const availableYears = useMemo(() => {
+    const years = [...new Set(events.map(getEventYear).filter(y => y !== null))];
+    return years.sort((a, b) => b - a);
+  }, [events]);
+
   if (!role) {
     return <LoginScreen onAuth={setRole} />;
   }
 
   const filtered = events.filter(e => {
     if (filterStatus !== "All" && e.status !== filterStatus) return false;
+    if (filterYear !== "All" && getEventYear(e) !== filterYear) return false;
     if (activeRegion && e.region !== activeRegion) return false;
     return true;
   });
@@ -754,7 +783,7 @@ export default function App() {
             </div>
           ) : (
             <>
-              {mobileTab === "home" && <MobileHome events={events} onSelectEvent={setSelected} filterStatus={filterStatus} setFilterStatus={setFilterStatus} />}
+              {mobileTab === "home" && <MobileHome events={events} onSelectEvent={setSelected} filterStatus={filterStatus} setFilterStatus={setFilterStatus} filterYear={filterYear} setFilterYear={setFilterYear} availableYears={availableYears} />}
               {mobileTab === "charts" && <MobileCharts events={events} />}
             </>
           )}
@@ -782,7 +811,6 @@ export default function App() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {/* Role badge */}
                 <div style={{ padding: "6px 12px", background: isAdmin ? G.pale : "rgba(251,191,36,0.1)", border: `1px solid ${isAdmin ? G.mid : "rgba(251,191,36,0.3)"}`, borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.1em", color: isAdmin ? G.light : AMBER, marginRight: "8px" }}>
                   {isAdmin ? "◆ ADMIN" : "◉ VIEW ONLY"}
                 </div>
@@ -887,14 +915,31 @@ export default function App() {
                 </div>
 
                 <div style={{ background: `linear-gradient(135deg,${BG.card},${BG.surface})`, border: `1px solid ${BG.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.35)" }}>
-                  <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BG.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.15)" }}>
-                    <div>
-                      <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Events Registry</div>
-                      <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text }}>
-                        {filtered.length} Event{filtered.length !== 1 ? "s" : ""}{activeRegion ? ` · ${activeRegion}` : ""}{filterStatus !== "All" ? ` · ${filterStatus}` : ""}
+                  <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BG.border}`, background: "rgba(0,0,0,0.15)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: availableYears.length > 0 ? "14px" : "0" }}>
+                      <div>
+                        <div style={{ fontSize: "10px", color: G.primary, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "3px", fontWeight: "600" }}>Events Registry</div>
+                        <div style={{ fontSize: "19px", fontWeight: "700", color: BG.text }}>
+                          {filtered.length} Event{filtered.length !== 1 ? "s" : ""}{activeRegion ? ` · ${activeRegion}` : ""}{filterStatus !== "All" ? ` · ${filterStatus}` : ""}{filterYear !== "All" ? ` · ${filterYear}` : ""}
+                        </div>
                       </div>
+                      <div style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.08em" }}>CLICK ANY ROW TO VIEW DETAILS</div>
                     </div>
-                    <div style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.08em" }}>CLICK ANY ROW TO VIEW DETAILS</div>
+
+                    {/* Year filter pills */}
+                    {availableYears.length > 0 && (
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "10px", color: BG.textMuted, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "600", marginRight: "4px" }}>Filter by year:</span>
+                        <button onClick={() => setFilterYear("All")} style={{ padding: "5px 14px", borderRadius: "16px", border: `1px solid`, borderColor: filterYear === "All" ? AMBER : BG.border, background: filterYear === "All" ? "rgba(251,191,36,0.1)" : "transparent", color: filterYear === "All" ? AMBER : BG.textSub, fontSize: "11px", cursor: "pointer", fontWeight: "600", letterSpacing: "0.05em", fontFamily: "'Outfit',sans-serif", transition: "all 0.15s" }}>
+                          ALL
+                        </button>
+                        {availableYears.map(y => (
+                          <button key={y} onClick={() => setFilterYear(y)} style={{ padding: "5px 14px", borderRadius: "16px", border: `1px solid`, borderColor: filterYear === y ? AMBER : BG.border, background: filterYear === y ? "rgba(251,191,36,0.1)" : "transparent", color: filterYear === y ? AMBER : BG.textSub, fontSize: "11px", cursor: "pointer", fontWeight: "600", letterSpacing: "0.05em", fontFamily: "'Outfit',sans-serif", transition: "all 0.15s" }}>
+                            {y}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "2.2fr 1.4fr 1.3fr 1fr 0.9fr 1.1fr", padding: "10px 28px", borderBottom: `1px solid ${BG.border}`, background: "rgba(0,0,0,0.1)" }}>
                     {["Event", "Dates & Duration", "Objective", "Role", "Delegation", "Previous Participation"].map(h => (
