@@ -3,29 +3,29 @@ import { supabase } from "./supabaseClient";
 
 // FOREST DEPTH PALETTE
 const G = {
-  primary: "#10B981",
-  light: "#34D399",
-  pale: "rgba(16,185,129,0.1)",
-  mid: "rgba(16,185,129,0.22)",
-  dark: "#059669",
+  primary: "#22D3A5",
+  light: "#5EEAC8",
+  pale: "rgba(34,211,165,0.1)",
+  mid: "rgba(34,211,165,0.22)",
+  dark: "#0F9B7E",
 };
 
 const BG = {
-  base: "#0F1F1A",
-  surface: "#152A24",
-  card: "#1A2F28",
+  base: "#071A24",
+  surface: "#0F2C38",
+  card: "#123340",
   border: "rgba(255,255,255,0.06)",
-  borderAccent: "rgba(16,185,129,0.25)",
-  muted: "#22403A",
-  text: "#E4EDE9",
-  textSub: "#7BA599",
-  textMuted: "#4A6B60",
+  borderAccent: "rgba(34,211,165,0.25)",
+  muted: "#15404F",
+  text: "#ECFEFF",
+  textSub: "#6B94A0",
+  textMuted: "#45636D",
 };
 
-const AMBER = "#FBBF24";
-const CYAN = "#06B6D4";
+const AMBER = "#A78BFA";
+const CYAN = "#38BDF8";
 const CORAL = "#F87171";
-const LILAC = "#A78BFA";
+const LILAC = "#F472B6";
 
 // PASSWORDS
 const ADMIN_PASSWORD = "iktvaadmin";
@@ -33,16 +33,16 @@ const VIEWER_PASSWORD = "iktva2026";
 const AUTH_KEY = "pscm_events_auth_role";
 
 const PART_COLOR = {
-  Exhibitor: "#10B981", Speaker: "#06B6D4", Sponsor: "#FBBF24",
-  Organizer: "#A78BFA", Attendee: "#F87171",
+  Exhibitor: "#22D3A5", Speaker: "#38BDF8", Sponsor: "#A78BFA",
+  Organizer: "#F472B6", Attendee: "#F87171",
 };
 const REGION_COLOR = {
-  "Middle East": "#10B981", Europe: "#06B6D4",
-  Americas: "#FBBF24", Asia: "#A78BFA", Africa: "#F87171",
+  "Middle East": "#22D3A5", Europe: "#38BDF8",
+  Americas: "#A78BFA", Asia: "#F472B6", Africa: "#F87171",
 };
 const TYPE_COLOR = {
-  Conference: "#10B981", Forum: "#06B6D4", "Supplier Forum": "#FBBF24",
-  Exhibition: "#A78BFA", Workshop: "#F87171",
+  Conference: "#22D3A5", Forum: "#38BDF8", "Supplier Forum": "#A78BFA",
+  Exhibition: "#F472B6", Workshop: "#F87171",
 };
 const REGION_DOTS = [
   { region: "Middle East", x: "62%", y: "48%" },
@@ -159,7 +159,7 @@ function LoginScreen({ onAuth }) {
       `}</style>
 
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: "-10%", left: "10%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(16,185,129,0.1) 0%,transparent 65%)", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", top: "-10%", left: "10%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(34,211,165,0.1) 0%,transparent 65%)", borderRadius: "50%" }} />
         <div style={{ position: "absolute", bottom: "-10%", right: "10%", width: "400px", height: "400px", background: "radial-gradient(circle,rgba(251,191,36,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
         <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${BG.muted} 1px,transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.2 }} />
       </div>
@@ -794,7 +794,7 @@ export default function App() {
       {!isMobile && (
         <>
           <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-            <div style={{ position: "absolute", top: "-15%", left: "15%", width: "600px", height: "600px", background: "radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
+            <div style={{ position: "absolute", top: "-15%", left: "15%", width: "600px", height: "600px", background: "radial-gradient(circle,rgba(34,211,165,0.06) 0%,transparent 65%)", borderRadius: "50%" }} />
             <div style={{ position: "absolute", bottom: "5%", right: "5%", width: "500px", height: "500px", background: "radial-gradient(circle,rgba(251,191,36,0.04) 0%,transparent 65%)", borderRadius: "50%" }} />
             <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${BG.muted} 1px,transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.25 }} />
           </div>
@@ -853,7 +853,7 @@ export default function App() {
                     <div style={{ position: "relative", height: "148px", background: BG.base, borderRadius: "10px", border: `1px solid ${BG.border}`, overflow: "hidden", marginBottom: "14px" }}>
                       {[25, 50, 75].map(p => <div key={p} style={{ position: "absolute", left: `${p}%`, top: 0, bottom: 0, borderLeft: `1px solid ${BG.muted}` }} />)}
                       {[35, 65].map(p => <div key={p} style={{ position: "absolute", top: `${p}%`, left: 0, right: 0, borderTop: `1px solid ${BG.muted}` }} />)}
-                      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: `1px solid rgba(16,185,129,0.15)` }} />
+                      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: `1px solid rgba(34,211,165,0.15)` }} />
                       <div style={{ position: "absolute", bottom: "6px", right: "10px", fontSize: "8px", color: BG.textMuted }}>WORLD MAP</div>
                       {REGION_DOTS.map(dot => {
                         const count = regionCounts[dot.region] || 0;
@@ -954,7 +954,7 @@ export default function App() {
                     return (
                       <div key={event.id} onClick={() => setSelected(event)}
                         style={{ display: "grid", gridTemplateColumns: "2.2fr 1.4fr 1.3fr 1fr 0.9fr 1.1fr", padding: "18px 28px", borderBottom: `1px solid ${BG.border}`, cursor: "pointer", transition: "background 0.15s", alignItems: "center" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "rgba(16,185,129,0.04)"}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(34,211,165,0.04)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px", textAlign: "left" }}>
                           <div style={{ width: "3px", height: "36px", borderRadius: "2px", background: lineColor, flexShrink: 0 }} />
