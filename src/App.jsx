@@ -22,10 +22,10 @@ const BG = {
   textMuted: "#45636D",
 };
 
-const AMBER = "#A78BFA";
+const AMBER = "#CBD5E1";
 const CYAN = "#38BDF8";
 const CORAL = "#F87171";
-const LILAC = "#F472B6";
+const LILAC = "#6366F1";
 
 // PASSWORDS
 const ADMIN_PASSWORD = "iktvaadmin";
@@ -33,16 +33,16 @@ const VIEWER_PASSWORD = "iktva2026";
 const AUTH_KEY = "pscm_events_auth_role";
 
 const PART_COLOR = {
-  Exhibitor: "#22D3A5", Speaker: "#38BDF8", Sponsor: "#A78BFA",
-  Organizer: "#F472B6", Attendee: "#F87171",
+  Exhibitor: "#22D3A5", Speaker: "#38BDF8", Sponsor: "#CBD5E1",
+  Organizer: "#6366F1", Attendee: "#F87171",
 };
 const REGION_COLOR = {
   "Middle East": "#22D3A5", Europe: "#38BDF8",
-  Americas: "#A78BFA", Asia: "#F472B6", Africa: "#F87171",
+  Americas: "#CBD5E1", Asia: "#6366F1", Africa: "#F87171",
 };
 const TYPE_COLOR = {
-  Conference: "#22D3A5", Forum: "#38BDF8", "Supplier Forum": "#A78BFA",
-  Exhibition: "#F472B6", Workshop: "#F87171",
+  Conference: "#22D3A5", Forum: "#38BDF8", "Supplier Forum": "#CBD5E1",
+  Exhibition: "#6366F1", Workshop: "#F87171",
 };
 const REGION_DOTS = [
   { region: "Middle East", x: "62%", y: "48%" },
@@ -627,7 +627,7 @@ function BottomNav({ tab, setTab, onAdd, isAdmin }) {
     : [{ id: "home", label: "Events", icon: "◈" }, { id: "charts", label: "Analytics", icon: "◉" }];
 
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: `rgba(15,31,26,0.97)`, backdropFilter: "blur(20px)", borderTop: `1px solid ${BG.border}`, paddingBottom: "env(safe-area-inset-bottom, 16px)", display: "flex", alignItems: "center", justifyContent: "space-around", height: "70px" }}>
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200, background: `rgba(7,26,36,0.97)`, backdropFilter: "blur(20px)", borderTop: `1px solid ${BG.border}`, paddingBottom: "env(safe-area-inset-bottom, 16px)", display: "flex", alignItems: "center", justifyContent: "space-around", height: "70px" }}>
       {items.map((item) => {
         if (!item) return (
           <button key="add" onClick={onAdd} style={{ width: "52px", height: "52px", borderRadius: "50%", background: `linear-gradient(135deg,${G.dark},${G.primary})`, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}50`, WebkitTapHighlightColor: "transparent", marginTop: "-20px" }}>
@@ -764,7 +764,7 @@ export default function App() {
 
       {isMobile && (
         <>
-          <div style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(15,31,26,0.97)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(7,26,36,0.97)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: "34px", height: "34px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 3px 10px ${G.primary}40` }}>
                 <span style={{ fontSize: "15px", color: "white", fontWeight: "800" }}>✦</span>
@@ -799,7 +799,7 @@ export default function App() {
             <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${BG.muted} 1px,transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.25 }} />
           </div>
 
-          <header style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(15,31,26,0.92)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}` }}>
+          <header style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(7,26,36,0.92)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}` }}>
             <div style={{ maxWidth: "100%", margin: "0 auto", padding: "0 48px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                 <div style={{ width: "40px", height: "40px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}40` }}>
