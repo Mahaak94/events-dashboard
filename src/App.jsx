@@ -800,7 +800,7 @@ export default function App() {
           </div>
 
           <header style={{ position: "sticky", top: 0, zIndex: 100, background: `rgba(15,31,26,0.92)`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${BG.border}` }}>
-            <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 40px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ maxWidth: "1800px", margin: "0 auto", padding: "0 48px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                 <div style={{ width: "40px", height: "40px", background: `linear-gradient(135deg,${G.dark},${G.primary})`, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${G.primary}40` }}>
                   <span style={{ fontSize: "18px", color: "white", fontWeight: "800" }}>✦</span>
@@ -828,7 +828,7 @@ export default function App() {
             </div>
           </header>
 
-          <main style={{ position: "relative", zIndex: 1, maxWidth: "1440px", margin: "0 auto", padding: "32px 40px" }}>
+          <main style={{ position: "relative", zIndex: 1, maxWidth: "1800px", margin: "0 auto", padding: "32px 48px" }}>
             {loadingData && (
               <div style={{ textAlign: "center", padding: "80px" }}>
                 <div style={{ fontSize: "32px", animation: "spin 1s linear infinite", display: "inline-block", marginBottom: "16px", color: G.primary }}>✦</div>
